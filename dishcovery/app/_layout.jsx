@@ -1,9 +1,26 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import Splash from "./splash";
+import { useEffect, useState } from "react";
 
 
 export default function RootLayout() {
-  
+   const [showSplash , setShowSplash] = useState(true)
+     useEffect(()=>{
+
+    setTimeout(()=>{
+
+      setShowSplash(false)
+
+    }, 3000)
+
+  })
+
+
+  if(showSplash){
+    return <Splash/>
+  }
+
 
   return (
     <>
