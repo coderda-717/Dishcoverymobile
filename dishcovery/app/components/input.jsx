@@ -1,10 +1,9 @@
 import { View, TextInput, StyleSheet } from 'react-native';
 
-const AuthInput = ({ placeholder, secureTextEntry, value, onChangeText }) => {
+const AuthInput = ({ secureTextEntry, value, onChangeText }) => {
   return (
     <View style={styles.inputContainer}>
       <TextInput
-        placeholder={placeholder}
         secureTextEntry={secureTextEntry}
         value={value}
         onChangeText={onChangeText}
@@ -18,7 +17,7 @@ const AuthInput = ({ placeholder, secureTextEntry, value, onChangeText }) => {
 const styles = StyleSheet.create({
   inputContainer: {
     width: '100%',
-    marginVertical: 8,
+    // marginVertical: 8,
   },
   input: {
     borderWidth: 1,

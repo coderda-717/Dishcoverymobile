@@ -1,13 +1,11 @@
-import { Button } from "react-native-web";
 
 const COLORS = {
-    primary : '#001E63',
-    black:'#030517',
-    grey:'#5C556C',
+    primary : '#f9d149',
+    black:'#282828',
+    grey:'#939393',
     white:'#FFFFFF',
-    backgroundGrey :'#EDF0F5',
-    red:"#FF0002",
-    border:'#EDF0F5'
+    red:"#D84444",
+   
 }
 
 const SIZES = {
