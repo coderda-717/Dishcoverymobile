@@ -1,54 +1,128 @@
 import { Tabs } from 'expo-router';
-import { Home, Search, Heart, Plus } from '@expo/vector-icons';
+import React from 'react';
+import { Image, Text, View, StyleSheet } from 'react-native';
+
+const TabIcon = ({ focused, activeIcon, defaultIcon, label }) => {
+  return (
+    <View style={styles.tabIconContainer}>
+      {focused && <View style={styles.activeBar} />}
+      <Image 
+        source={focused ? activeIcon : defaultIcon}
+        style={styles.tabIcon}
+        resizeMode="contain"
+      />
+      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+        {label}
+      </Text>
+    </View>
+  );
+};
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#059669',
-        tabBarInactiveTintColor: '#9CA3AF',
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-      }}>
+        tabBarStyle: styles.tabBar,
+        tabBarShowLabel: false,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ size, color }) => <Home size={size} color={color} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              focused={focused}
+              activeIcon={require('../../assets/icons/homeselected.png')}
+              defaultIcon={require('../../assets/icons/home.png')}
+              label="Home"
+            />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="dishcover"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ size, color }) => <Search size={size} color={color} />,
+          title: 'Dishcover',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              focused={focused}
+              activeIcon={require('../../assets/icons/dishcoverselected.png')}
+              defaultIcon={require('../../assets/icons/dishcover.png')}
+              label="Dishcover"
+            />
+          ),
         }}
       />
       <Tabs.Screen
-        name="favorites"
+        name="add"
         options={{
-          title: 'Favorites',
-          tabBarIcon: ({ size, color }) => <Heart size={size} color={color} />,
+          title: 'Add',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              focused={focused}
+              activeIcon={require('../../assets/icons/addselected.png')}
+              defaultIcon={require('../../assets/icons/add.png')}
+              label="Add"
+            />
+          ),
         }}
       />
       <Tabs.Screen
-        name="upload"
+        name="profile"
         options={{
-          title: 'Upload',
-          tabBarIcon: ({ size, color }) => <Plus size={size} color={color} />,
+          title: 'Profile',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              focused={focused}
+              activeIcon={require('../../assets/icons/profileselected.png')}
+              defaultIcon={require('../../assets/icons/profile.png')}
+              label="Profile"
+            />
+          ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    height: 60,
+    paddingBottom: 5,
+    paddingTop: 5,
+  },
+  tabIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  activeBar: {
+    position: 'absolute',
+    top: -6,
+    width: 50,
+    height: 3,
+    backgroundColor: '#ff4458',
+    borderRadius: 2,
+  },
+  tabIcon: {
+    width: 24,
+    height: 24,
+    marginBottom: 4,
+  },
+  
+   tabLabel: {
+    fontSize: 11,
+    color: '#999',
+    fontFamily: 'GoogleSans-Regular',
+  },
+  tabLabelActive: {
+    color: '#ff4458',
+    fontWeight: '600',
+    fontFamily: 'GoogleSans-Medium',
+  },
+});

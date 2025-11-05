@@ -22,7 +22,7 @@ const OnboardScreen = () => {
         {/* Button container */}
         <View style={styles.buttonContainer}>
           <AuthButton title="Sign Up" onPress={() => router.push("/(auth)/sign-up")} />
-          <TouchableOpacity style={styles.guestButton} onPress={() => router.push("/(home)")}>
+          <TouchableOpacity style={styles.guestButton} onPress={() => router.push("/(tabs)/index")}>
             <Text style={styles.guestButtonText}>Continue as guest</Text>
           </TouchableOpacity>
         </View>

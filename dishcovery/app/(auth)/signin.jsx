@@ -5,11 +5,20 @@ import AuthInput from '../components/input';
 import AuthButton from '../components/button';
 import DishSafeAreaView from '../components/DishSafearea';
 import AuthStyles from '../(auth)/AuthStyle';
+import SignUpScreen from './signup';
 
-const SignInScreen = () => {
+    
+    
+  const SignInScreen = () => {
   const [form, setForm] = useState({ email: "", password: "" })
-  const handleChange = (name, value) => setForm({ ...form, [name]: value })
-  const router = useRouter()
+  const handleChange = (name, value) => setForm({ ...form, [name]: value }) 
+  const router= useRouter();
+  
+
+            
+
+           
+ 
 
   return (
     <DishSafeAreaView>
@@ -36,13 +45,18 @@ const SignInScreen = () => {
             value={form.password}
             onChangeText={(v) => handleChange("password", v)}
           />
+          
            </ScrollView>
+          
         </View>
        <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
           <Text style={AuthStyles.forgotLink}>Forgot Password?</Text>
         </TouchableOpacity>
         <View style={AuthStyles.buttonContainer}>
-          <AuthButton title="Log In" onPress={() => {}} />
+
+      
+          <AuthButton title="Log In" onPress={() =>router.push("/(tabs)")} />
+        
           <AuthButton title="Continue with Google" type="google" onPress={() => {}} />
         </View>
 
@@ -53,13 +67,22 @@ const SignInScreen = () => {
       </ScrollView>
     </DishSafeAreaView>
   )
+     
 };
+
+    export default  SignInScreen ;
+
+  
+  
 const styles = StyleSheet.create({
   headerContainer: {
     alignItems: "center",
     marginBottom: 32,
     marginTop: 140,
   },
+
 });
 
-export default SignInScreen;
+
+  
+            

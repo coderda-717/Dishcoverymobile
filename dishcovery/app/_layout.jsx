@@ -1,36 +1,39 @@
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import Splash from "./splash";
-import { useEffect, useState } from "react";
+import { SplashScreen, Stack } from "expo-router";
+import { useFonts } from 'expo-font';
+import { useEffect, useCallback } from 'react';
 
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-   const [showSplash , setShowSplash] = useState(true)
-     useEffect(()=>{
-
-    setTimeout(()=>{
-
-      setShowSplash(false)
-
-    }, 300)
-
-  })
 
 
-  if(showSplash){
-    return <Splash/>
-  }
+   const [fontsLoaded] = useFonts({
+    'GoogleSans-Regular': require('../assets/fonts/GoogleSans-Regular.ttf'),
+    'GoogleSans-Medium': require('../assets/fonts/GoogleSans-Medium.ttf'),
+    'GoogleSans-Bold': require('../assets/fonts/GoogleSans-Bold.ttf'),
+  });
 
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
 
+  if (!fontsLoaded) return null;
+  
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
-           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="recipe/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </>
+    <Stack initialRouteName="splash">
+     {/* Splash screen*/}
+     <Stack.Screen name="splash" options={{ headerShown: false }} />
+
+      {/* Auth screens (login, register, etc.) */}
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+
+      {/* Main app tabs */}
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+      {/* Recipe detail page */}
+      <Stack.Screen name="recipedetail" options={{ headerShown: false }} />
+    </Stack>
   );
 }

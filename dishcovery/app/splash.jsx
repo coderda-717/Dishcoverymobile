@@ -1,8 +1,18 @@
 import { View, Image, Text, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { useRouter } from "expo-router";
 
 export default function SplashScreen() {
+  const router = useRouter();
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.replace("/(auth)/signin"); // ✅ go to Sign In
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+  
   return (
     <SafeAreaView style={{ backgroundColor: "#ffffff", flex: 1 }}>
       <View
