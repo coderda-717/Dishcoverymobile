@@ -1,9 +1,11 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Image, Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const TabIcon = ({ focused, activeIcon, defaultIcon, label }) => {
   return (
+   <SafeAreaView>
     <View style={styles.tabIconContainer}>
       {focused && <View style={styles.activeBar} />}
       <Image 
@@ -15,6 +17,7 @@ const TabIcon = ({ focused, activeIcon, defaultIcon, label }) => {
         {label}
       </Text>
     </View>
+    </SafeAreaView>
   );
 };
 
@@ -26,6 +29,7 @@ export default function TabLayout() {
         tabBarStyle: styles.tabBar,
         tabBarShowLabel: false,
       }}
+      safeAreaInsets={{ bottom: 0 }}
     >
       <Tabs.Screen
         name="index"
@@ -92,37 +96,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
-    height: 60,
-    paddingBottom: 5,
-    paddingTop: 5,
+    height: 108,
+    paddingBottom: 9,
+    paddingTop: 13,
   },
   tabIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    marginRight: -1,
+    marginBottom: -32,
   },
   activeBar: {
     position: 'absolute',
-    top: -6,
+    top: -13,
     width: 50,
-    height: 3,
+    height: 6,
     backgroundColor: '#ff4458',
-    borderRadius: 2,
+    borderRadius: 5,
   },
   tabIcon: {
     width: 24,
     height: 24,
-    marginBottom: 4,
+    marginBottom: 6,
+    marginRight: 3,
+   
+   
+    
   },
-  
-   tabLabel: {
+  tabLabel: {
     fontSize: 11,
     color: '#999',
     fontFamily: 'GoogleSans-Regular',
+    marginRight: -23,
+    marginLeft: -25,
   },
   tabLabelActive: {
     color: '#ff4458',
     fontWeight: '600',
-    fontFamily: 'GoogleSans-Medium',
   },
 });

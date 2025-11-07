@@ -34,7 +34,7 @@ const recipes = [
     categories: ["Lunch", "Dinner"],
     time: "1 hr",
     aboutrecipe: "Spicy and flavorful West African rice cooked in tomato sauce.",
-    flag: "NG",
+    flag: "🇳🇬",
     image: require("../../assets/images/recipeimages/jollof.png"),            
     chef: {
       image: "https://randomuser.me/api/portraits/women/3.jpg",
@@ -48,7 +48,7 @@ const recipes = [
     categories: ["Drinks"],
     time: "10 mins",
     aboutrecipe: "A refreshing mix of tropical fruits blended to perfection.",
-    flag: "GH",
+    flag: "🇬🇭",
     image: require("../../assets/images/recipeimages/jollof.png"),          
     chef: {
       image: "https://randomuser.me/api/portraits/men/4.jpg",
@@ -62,7 +62,7 @@ const recipes = [
     categories: ["Snacks"],
     time: "25 mins",
     aboutrecipe: "Moist chocolate muffins with a gooey center.",
-    flag: "UK",
+    flag: "",
     image: require("../../assets/images/recipeimages/jollof.png"),             
     chef: {
       image: "https://randomuser.me/api/portraits/women/5.jpg",
@@ -81,14 +81,14 @@ const recipes = [
     image: require("../../assets/images/recipeimages/jollof.png"),
     chef:{
         image: "https://randomuser.me/api/portraits/women/5.jpg",
-        author: "Alison Werner",
+        name: "Alison Werner",
        timePosted: "30 mins ago",   
   },
 },
 
   {
     id: 7,
-    title: "Seafood Okra Soup",
+    name: "Seafood Okra Soup",
     categories: ["Lunch"],
     time: "30 mins",
     aboutrecipe: "A well known Nigerian soup that has okra as it's primary ingredient. It may include other vegetables like onions...",
@@ -96,10 +96,54 @@ const recipes = [
     image: require("../../assets/images/recipeimages/jollof.png"),
     chef:{
       image: "https://randomuser.me/api/portraits/women/5.jpg",  
-      author: "Ola Sharon",
-      timeAgo: "30 mins ago",
+      name: "Ola Sharon",
+      timePosted: "30 mins ago",
     }, 
   },
+
+  {
+    id: 8,
+    name: "Fried Plantains",
+    categories: ["Breakfast", "Snacks"],
+    time: "15 mins",
+    aboutrecipe: "Sweet and caramelized ripe plantains fried to golden perfection. A popular West African side dish or snack.",
+    flag: "🇳🇬",
+    image: require("../../assets/images/recipeimages/jollof.png"),
+    chef: {
+      image: "https://randomuser.me/api/portraits/men/8.jpg",
+      name: "Chef Kwame",
+      timePosted: "1 hr ago",
+    },
+  },
+  {
+    id: 9,
+    name: "Egusi Soup",
+    categories: ["Lunch", "Dinner"],
+    time: "75 mins",
+    aboutrecipe: "Rich Nigerian soup made from ground melon seeds, leafy vegetables, and assorted meats or fish. Typically served with pounded yam or fufu.",
+    flag: "🇳🇬",
+    image: require("../../assets/images/recipeimages/jollof.png"),
+    chef: {
+      image: "https://randomuser.me/api/portraits/women/9.jpg",
+      name: "Chef Ngozi",
+      timePosted: "5 days ago",
+    },
+  },
+
+  {
+    id: 10,
+    name: "Pounded Yam",
+    categories: ["Lunch", "Dinner"],
+    time: "50 mins",
+    aboutrecipe: "Smooth yam dough ('swallow') served with soups like egusi or ogbono. Popular in South-West (Yoruba), North-Central, and Eastern Nigeria",
+    flag: "🇳🇬",
+    image: require("../../assets/images/recipeimages/jollof.png"),
+    chef: {
+      image: "https://randomuser.me/api/portraits/men/10.jpg",
+      name: "Chef Adeola",
+      timePosted: "30 mins ago",
+    },
+   }, 
   // ... add more recipes
 ];
 

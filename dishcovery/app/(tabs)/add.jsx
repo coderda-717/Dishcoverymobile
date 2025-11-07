@@ -7,9 +7,9 @@ import {
   Image, 
   ScrollView,
   StyleSheet, 
-  SafeAreaView,
   Alert 
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -72,7 +72,7 @@ export default function Add() {
         <Text style={styles.header}>Add Recipe</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Image 
-            source={require('../assets/arrow-right.png')} 
+            source={require('../../assets/icons/arrow-right.png')} 
             style={styles.backArrow}
           />
         </TouchableOpacity>
@@ -91,7 +91,7 @@ export default function Add() {
           ) : (
             <>
               <Image 
-                source={require('../assets/camera-icon.png')} 
+                source={require('../../assets/icons/camera-icon.png')} 
                 style={styles.cameraIcon}
               />
               <Text style={styles.uploadText}>Tap to add photo</Text>
@@ -126,7 +126,7 @@ export default function Add() {
             {formData.category || 'Select category...'}
           </Text>
           <Image 
-            source={require('../assets/chevron-down.png')} 
+            source={require('../../assets/icons/chevron-down.png')} 
             style={styles.chevron}
           />
         </TouchableOpacity>
@@ -195,7 +195,7 @@ export default function Add() {
             {formData.cookingTime || 'Select time'}
           </Text>
           <Image 
-            source={require('../assets/chevron-down.png')} 
+            source={require('../../assets/icons/chevron-down.png')} 
             style={styles.chevron}
           />
         </TouchableOpacity>

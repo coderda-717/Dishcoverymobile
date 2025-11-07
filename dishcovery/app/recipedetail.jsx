@@ -6,10 +6,10 @@ import { recipes as recipeData } from "./recipe/recipe";
 
 export default function RecipeDetail() {
   const { id } = useLocalSearchParams();
-  const recipe = recipeData.find((r) => r.id === parseInt(id));
+  const recipes = recipeData.find((r) => r.id === parseInt(id));
   const router = useRouter();
 
-  if (!recipe) {
+  if (!recipes) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Recipe not found.</Text>
@@ -22,19 +22,19 @@ export default function RecipeDetail() {
       <TouchableOpacity onPress={() => router.back()} style={{ padding: 15 }}>
         <Ionicons name="arrow-back" size={24} color="red" />
       </TouchableOpacity>
-      <Image source={{ uri: recipe.image }} style={styles.image} />
+      <Image source={{ uri: recipes.image }} style={styles.image} />
       <View style={styles.content}>
-        <Text style={styles.name}>{recipe.name}</Text>
+        <Text style={styles.name}>{recipes.name}</Text>
         <Text style={styles.info}>
-          {recipe.type} • {recipe.time} • {recipe.country}
+          {recipes.categories} • {recipes.time} • {recipes.country}
         </Text>
-        <Text style={styles.about}>{recipe.aboutrecipe}</Text>
+        <Text style={styles.about}>{recipes.aboutrecipe}</Text>
 
         <View style={styles.chefContainer}>
-          <Image source={{ uri: recipe.chef.image }} style={styles.chefImage} />
+          <Image source={{ uri: recipes.chef.image }} style={styles.chefImage} />
           <View>
-            <Text style={styles.chefName}>{recipe.chef.name}</Text>
-            <Text style={styles.postTime}>{recipe.chef.timePosted}</Text>
+            <Text style={styles.chefName}>{recipes.chef.name}</Text>
+            <Text style={styles.postTime}>{recipes.chef.timePosted}</Text>
           </View>
         </View>
       </View>

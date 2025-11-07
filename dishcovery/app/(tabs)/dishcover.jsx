@@ -7,16 +7,18 @@ import {
   TouchableOpacity, 
   Image, 
   StyleSheet, 
-  SafeAreaView 
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { recipes } from '../recipe/recipe';
+import recipes from '../recipe/recipe';
 
 export default function Dishcover() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [recentSearches, setRecentSearches] = useState(['Jollof Rice', 'Egusi Soup', 'Pounded Yam']);
   const router = useRouter();
+
+  const safeRecipes = Array.isArray(recipes) ? recipes : [];
 
   const handleSearch = (text) => {
     setSearchQuery(text);
@@ -31,11 +33,15 @@ export default function Dishcover() {
     setTimeout(() => setShowDropdown(false), 200);
   };
 
+  // Search using both 'name' and 'title', and 'aboutrecipe' and 'description'
   const searchResults = searchQuery.length > 0 
-    ? recipes.filter(recipe => {
+    ? safeRecipes.filter(recipe => {
         const query = searchQuery.toLowerCase();
-        const nameMatch = recipe.title?.toLowerCase().includes(query);
-        const descMatch = recipe.description?.toLowerCase().includes(query);
+        // Handle both 'name' and 'title' properties
+        const recipeName = recipe?.name || recipe?.title || '';
+        const recipeDesc = recipe?.aboutrecipe || recipe?.description || '';
+        const nameMatch = recipeName.toLowerCase().includes(query);
+        const descMatch = recipeDesc.toLowerCase().includes(query);
         return nameMatch || descMatch;
       })
     : [];
@@ -57,7 +63,7 @@ export default function Dishcover() {
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
           <Image 
-            source={require('../assets/search-icon.png')} 
+            source={require('../../assets/icons/search-icon.png')} 
             style={styles.searchIcon}
           />
           <TextInput
@@ -95,9 +101,11 @@ export default function Dishcover() {
                       <TouchableOpacity
                         key={recipe.id}
                         style={styles.searchDropdownItem}
-                        onPress={() => handleRecipePress(recipe.id, recipe.title)}
+                        onPress={() => handleRecipePress(recipe.id, recipe.name || recipe.title)}
                       >
-                        <Text style={styles.searchDropdownText}>{recipe.title}</Text>
+                        <Text style={styles.searchDropdownText}>
+                          {recipe.name || recipe.title}
+                        </Text>
                       </TouchableOpacity>
                     ))
                   ) : (
@@ -118,22 +126,86 @@ export default function Dishcover() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.grid}>
-          {recipes.map((recipe) => (
-            <TouchableOpacity
-              key={recipe.id}
-              style={styles.gridItem}
-              onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.title)}
-              disabled={showDropdown}
-            >
-              <Image source={recipe.image} style={styles.gridImage} />
-            </TouchableOpacity>
-          ))}
-          <View style={styles.greyBox} />
+          {safeRecipes.length > 0 ? (
+            <>
+              {/* First 4 grey boxes */}
+              {[1, 2, 3, 4].map((num) => (
+                <View key={`grey-${num}`} style={styles.gridItem}>
+                  <View style={styles.greyBox} />
+                </View>
+              ))}
+
+              {/* 5th item - Large rectangular (spans 2 columns) */}
+              {safeRecipes[0] && (
+                <TouchableOpacity
+                  key={`large-${safeRecipes[0].id}`}
+                  style={styles.largeGridItem}
+                  onPress={() => !showDropdown && handleRecipePress(safeRecipes[0].id, safeRecipes[0].name || safeRecipes[0].title)}
+                  disabled={showDropdown}
+                >
+                  <Image source={safeRecipes[0].image} style={styles.gridImage} />
+                </TouchableOpacity>
+              )}
+
+              {/* 6th item - Large rectangular (spans 2 columns) */}
+              {safeRecipes[1] && (
+                <TouchableOpacity
+                  key={`large-${safeRecipes[1].id}`}
+                  style={styles.largeGridItem}
+                  onPress={() => !showDropdown && handleRecipePress(safeRecipes[1].id, safeRecipes[1].name || safeRecipes[1].title)}
+                  disabled={showDropdown}
+                >
+                  <Image source={safeRecipes[1].image} style={styles.gridImage} />
+                </TouchableOpacity>
+              )}
+
+              {/* Next 8 square items (items 2-9) */}
+              {safeRecipes.slice(2, 10).map((recipe) => (
+                <TouchableOpacity
+                  key={recipe.id}
+                  style={styles.gridItem}
+                  onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name || recipe.title)}
+                  disabled={showDropdown}
+                >
+                  <Image source={recipe.image} style={styles.gridImage} />
+                </TouchableOpacity>
+              ))}
+
+              {/* Last 2 large rectangular items (items 10-11) */}
+              {safeRecipes.slice(10, 12).map((recipe) => (
+                <TouchableOpacity
+                  key={`large-end-${recipe.id}`}
+                  style={styles.largeGridItem}
+                  onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name || recipe.title)}
+                  disabled={showDropdown}
+                >
+                  <Image source={recipe.image} style={styles.gridImage} />
+                </TouchableOpacity>
+              ))}
+
+              {/* Remaining items as squares */}
+              {safeRecipes.slice(12).map((recipe) => (
+                <TouchableOpacity
+                  key={recipe.id}
+                  style={styles.gridItem}
+                  onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name || recipe.title)}
+                  disabled={showDropdown}
+                >
+                  <Image source={recipe.image} style={styles.gridImage} />
+                </TouchableOpacity>
+              ))}
+            </>
+          ) : (
+            <View style={styles.noRecipes}>
+              <Text style={styles.noRecipesText}>No recipes available</Text>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -188,7 +260,6 @@ const styles = StyleSheet.create({
     tintColor: '#999',
     marginRight: 8,
   },
-  
   overlay: {
     position: 'absolute',
     top: 60,
@@ -213,48 +284,62 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
   },
-  
   searchDropdownItem: {
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
- 
   noResultsText: {
     fontSize: 15,
     color: '#999',
     textAlign: 'center',
-    fontFamily: 'System',
+    fontFamily: 'GoogleSans-Regular',
   },
   blurred: {
     opacity: 0.3,
   },
   gridContainer: {
     flex: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
+    marginBottom: 70,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
     paddingBottom: 20,
   },
   gridItem: {
-    width: '31.5%',
+    width: '33.33%',
     aspectRatio: 1,
-    marginBottom: 8,
-    borderRadius: 8,
-    overflow: 'hidden',
+    padding: 2,
+  },
+  largeGridItem: {
+    width: '66.66%',
+    aspectRatio: 2,
+    padding: 2,
   },
   gridImage: {
     width: '100%',
     height: '100%',
+    borderRadius: 6,
   },
   greyBox: {
-    width: '31.5%',
-    aspectRatio: 1,
+    width: '100%',
+    height: '100%',
     backgroundColor: '#e0e0e0',
-    borderRadius: 8,
+    borderRadius: 6,
+  },
+  noRecipes: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  noRecipesText: {
+    fontSize: 16,
+    color: '#999',
+    fontFamily: 'GoogleSans-Regular',
   },
 });

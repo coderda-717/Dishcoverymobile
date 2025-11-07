@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import RecipeCard from '../components/RecipeCard';
-import { recipes } from '../recipe/recipe';
+import  recipes  from '../recipe/recipe';
 
 export default function index() {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     paddingVertical: 16,
-    fontFamily: 'GoogleSans-Bold', // Add this
+    fontFamily: 'GoogleSans-Regular',
   },
   categoryText: {
     color: '#333',

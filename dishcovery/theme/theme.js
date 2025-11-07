@@ -10,10 +10,10 @@ const COLORS = {
 
 const SIZES = {
     heading : 24,
-    regular :14,
-    large:32,
-    small: 12,
-    button : 18
+    regular : 14,
+    large: 28,
+    small: 10,
+    button : 16
 
 }
 

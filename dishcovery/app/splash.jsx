@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { View, Image, Text, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router";

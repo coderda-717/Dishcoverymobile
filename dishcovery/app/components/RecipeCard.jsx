@@ -27,7 +27,7 @@ const RecipeCard = ({ recipe, onCategoryPress }) => {
         </View>
 
         <Text style={styles.flag}>{recipe.flag}</Text>
-        <Text style={styles.aboutrecipe}>{recipe}</Text>
+        <Text style={styles.aboutrecipe}>{recipe.aboutrecipe}</Text>
 
         {/* Chef Section */}
         <View style={styles.chefSection}>
