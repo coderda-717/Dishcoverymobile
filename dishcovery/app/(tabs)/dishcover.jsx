@@ -128,72 +128,49 @@ export default function Dishcover() {
         <View style={styles.grid}>
           {safeRecipes.length > 0 ? (
             <>
-              {/* First 4 grey boxes */}
-              {[1, 2, 3, 4].map((num) => (
-                <View key={`grey-${num}`} style={styles.gridItem}>
-                  <View style={styles.greyBox} />
-                </View>
-              ))}
-
-              {/* 5th item - Large rectangular (spans 2 columns) */}
-              {safeRecipes[0] && (
-                <TouchableOpacity
-                  key={`large-${safeRecipes[0].id}`}
-                  style={styles.largeGridItem}
-                  onPress={() => !showDropdown && handleRecipePress(safeRecipes[0].id, safeRecipes[0].name || safeRecipes[0].title)}
-                  disabled={showDropdown}
-                >
-                  <Image source={safeRecipes[0].image} style={styles.gridImage} />
-                </TouchableOpacity>
-              )}
-
-              {/* 6th item - Large rectangular (spans 2 columns) */}
-              {safeRecipes[1] && (
-                <TouchableOpacity
-                  key={`large-${safeRecipes[1].id}`}
-                  style={styles.largeGridItem}
-                  onPress={() => !showDropdown && handleRecipePress(safeRecipes[1].id, safeRecipes[1].name || safeRecipes[1].title)}
-                  disabled={showDropdown}
-                >
-                  <Image source={safeRecipes[1].image} style={styles.gridImage} />
-                </TouchableOpacity>
-              )}
-
-              {/* Next 8 square items (items 2-9) */}
-              {safeRecipes.slice(2, 10).map((recipe) => (
-                <TouchableOpacity
-                  key={recipe.id}
-                  style={styles.gridItem}
-                  onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name || recipe.title)}
-                  disabled={showDropdown}
-                >
-                  <Image source={recipe.image} style={styles.gridImage} />
-                </TouchableOpacity>
-              ))}
-
-              {/* Last 2 large rectangular items (items 10-11) */}
-              {safeRecipes.slice(10, 12).map((recipe) => (
-                <TouchableOpacity
-                  key={`large-end-${recipe.id}`}
-                  style={styles.largeGridItem}
-                  onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name || recipe.title)}
-                  disabled={showDropdown}
-                >
-                  <Image source={recipe.image} style={styles.gridImage} />
-                </TouchableOpacity>
-              ))}
-
-              {/* Remaining items as squares */}
-              {safeRecipes.slice(12).map((recipe) => (
-                <TouchableOpacity
-                  key={recipe.id}
-                  style={styles.gridItem}
-                  onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name || recipe.title)}
-                  disabled={showDropdown}
-                >
-                  <Image source={recipe.image} style={styles.gridImage} />
-                </TouchableOpacity>
-              ))}
+              {safeRecipes.map((recipe, index) => {
+                // Calculate position in the repeating pattern of 23
+                const positionInPattern = index % 23;
+                
+                // Positions for vertical rectangles (tall): 3, 8, 11, 16, 19
+                const isVerticalRectangle = [3, 8, 11, 16, 19].includes(positionInPattern);
+                
+                // Position for grey box: 4
+                const isGreyBox = positionInPattern === 4;
+                
+                if (isGreyBox) {
+                  return (
+                    <View key={`grey-${index}`} style={styles.gridItem}>
+                      <View style={styles.greyBox} />
+                    </View>
+                  );
+                }
+                
+                if (isVerticalRectangle) {
+                  return (
+                    <TouchableOpacity
+                      key={recipe.id}
+                      style={styles.verticalRectangleItem}
+                      onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name || recipe.title)}
+                      disabled={showDropdown}
+                    >
+                      <Image source={recipe.image} style={styles.gridImage} />
+                    </TouchableOpacity>
+                  );
+                }
+                
+                // Default square item
+                return (
+                  <TouchableOpacity
+                    key={recipe.id}
+                    style={styles.gridItem}
+                    onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name || recipe.title)}
+                    disabled={showDropdown}
+                  >
+                    <Image source={recipe.image} style={styles.gridImage} />
+                  </TouchableOpacity>
+                );
+              })}
             </>
           ) : (
             <View style={styles.noRecipes}>
