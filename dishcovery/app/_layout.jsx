@@ -1,7 +1,7 @@
-// app/_layout.jsx
-import { SplashScreen, Stack } from "expo-router";
+import React, { useEffect } from 'react';
+import { SplashScreen, Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
-import { useEffect } from 'react';
+import { AuthProvider } from './context/AuthContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -19,29 +19,22 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
-  
+
   return (
-    <Stack initialRouteName="splash">
-      {/* Splash screen */}
-      <Stack.Screen name="splash" options={{ headerShown: false }} />
-
-      {/* Auth screens (login, register, etc.) */}
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-
-      {/* Main app tabs */}
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
-      {/* Recipe detail page */}
-      <Stack.Screen name="recipedetail" options={{ headerShown: false }} />
-
-      {/* Profile screens */}
-      <Stack.Screen name="profile/edit-profile" options={{ headerShown: false }} />
-      <Stack.Screen name="profile/my-dishes" options={{ headerShown: false }} />
-      <Stack.Screen name="profile/favorites" options={{ headerShown: false }} />
-      <Stack.Screen name="profile/reviews" options={{ headerShown: false }} />
-      <Stack.Screen name="profile/privacy-policy" options={{ headerShown: false }} />
-      <Stack.Screen name="profile/terms-conditions" options={{ headerShown: false }} />
-      <Stack.Screen name="profile/faq-help" options={{ headerShown: false }} />
-    </Stack>
+    <AuthProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="splash" />
+        <Stack.Screen name="auth/signin" />
+        <Stack.Screen name="auth/signup" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="profile/edit-profile" />
+        <Stack.Screen name="profile/my-dishes" />
+        <Stack.Screen name="profile/favorites" />
+        <Stack.Screen name="profile/reviews" />
+        <Stack.Screen name="profile/privacy-policy" />
+        <Stack.Screen name="profile/terms-conditions" />
+        <Stack.Screen name="profile/faq-help" />
+      </Stack>
+    </AuthProvider>
   );
 }

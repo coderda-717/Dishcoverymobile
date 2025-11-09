@@ -40,6 +40,13 @@
         }
       ],
       "expo-font"
+
+       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to upload recipe images"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
