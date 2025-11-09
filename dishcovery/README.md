@@ -94,7 +94,9 @@ Feel free to use and modify it for your own projects.
 
 💡 Author
 
-Group 15 Mobile Dev Team
-. Otunla Oluwadamilola
-.        Oluwatobi
+Group 15 Mobile Dev Team :
+
+. Otunla  Oluwadamilola
+
+. Ogundele Oluwatobiloba
 
