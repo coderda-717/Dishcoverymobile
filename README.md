@@ -43,13 +43,12 @@ Dishcovery uses Expo’s file-based routing, meaning your app’s navigation is 
 
 
  ┣ /auth           → Login, Register, Forgot Password
-
+ 
  
  ┣ /(tabs)         → Main app screens (Home, Explore, Profile, etc.)
-
+ 
  
  ┣ _layout.js      → Global layout configuration
- 
 
 Most screens, layouts, and navigation stacks are defined in the /app directory.
 
