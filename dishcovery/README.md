@@ -1,50 +1,100 @@
-# Welcome to your Expo app 👋
+# 🍽️ Welcome to Dishcovery 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Dishcovery is a mobile app built with [**Expo**](https://expo.dev) and [**React Native**](https://reactnative.dev) that helps users discover, create, and share delicious recipes — all from the comfort of their kitchen.
 
-## Get started
+This project uses [**Expo Router**](https://docs.expo.dev/router/introduction/) for modern, file-based navigation.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 🚀 Get Started
 
-2. Start the app
+### 1️⃣ Install dependencies
 
-   ```bash
-   npx expo start
-   ```
+```bash
+npm install
+```
 
-In the output, you'll find options to open the app in a
+2️⃣ Start the app
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+```bash
+npx expo start
+```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+In the terminal, you’ll see options to open the app in:
 
-## Get a fresh project
+. A development build
 
-When you're ready, run:
+. An Android emulator
 
+. An iOS simulator
+
+. Or Expo Go
+ — for quick testing on real devices
+
+
+🧭 Project Structure
+
+Dishcovery uses Expo’s file-based routing, meaning your app’s navigation is built automatically from the folder structure.
+
+/app
+ ┣ /auth           → Login, Register, Forgot Password
+ ┣ /(tabs)         → Main app screens (Home, Explore, Profile, etc.)
+ ┣ _layout.js      → Global layout configuration
+
+Most screens, layouts, and navigation stacks are defined in the /app directory.
+
+
+🧑‍🍳 Features
+
+✅ Browse recipes by category
+✅ View detailed recipe instructions and ingredients
+✅ Add and save your favorite recipes
+✅ Beautiful, minimal UI built with React Native components
+✅ Cross-platform support (Android, iOS, Web)
+
+
+🛠️ Tech Stack
+
+. Expo
+
+. React Native
+
+. Expo Router
+
+. React Navigation
+
+. React Native Safe Area Context
+
+. Expo Vector Icons
+
+
+🧹 Reset Project
+
+When you're ready to start fresh, run:
 ```bash
 npm run reset-project
 ```
+This command moves the current code to an app-example directory and creates a blank app directory for a clean start.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-## Learn more
+🌍 Join the Community
 
-To learn more about developing your project with Expo, look at the following resources:
+. Expo on GitHub
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+. Expo Discord
 
-## Join the community
+. React Native Community
 
-Join our community of developers creating universal apps.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+🧾 License
+
+This project is licensed under the MIT License.
+Feel free to use and modify it for your own projects.
+
+
+💡 Author
+
+Group 15 Mobile Dev Team
+. Otunla Oluwadamilola
+.        Oluwatobi
+
