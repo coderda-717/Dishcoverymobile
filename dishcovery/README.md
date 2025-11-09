@@ -8,13 +8,15 @@ This project uses [**Expo Router**](https://docs.expo.dev/router/introduction/) 
 
 ## 🚀 Get Started
 
+
 ### 1️⃣ Install dependencies
 
 ```bash
 npm install
 ```
 
-2️⃣ Start the app
+
+#### 2️⃣ Start the app
 
 ```bash
 npx expo start
@@ -32,7 +34,8 @@ In the terminal, you’ll see options to open the app in:
  — for quick testing on real devices
 
 
-🧭 Project Structure
+
+##### 🧭 Project Structure
 
 Dishcovery uses Expo’s file-based routing, meaning your app’s navigation is built automatically from the folder structure.
 
@@ -44,7 +47,8 @@ Dishcovery uses Expo’s file-based routing, meaning your app’s navigation is 
 Most screens, layouts, and navigation stacks are defined in the /app directory.
 
 
-🧑‍🍳 Features
+
+###### 🧑‍🍳 Features
 
 ✅ Browse recipes by category
 ✅ View detailed recipe instructions and ingredients
@@ -53,7 +57,8 @@ Most screens, layouts, and navigation stacks are defined in the /app directory.
 ✅ Cross-platform support (Android, iOS, Web)
 
 
-🛠️ Tech Stack
+
+######## 🛠️ Tech Stack
 
 . Expo
 
@@ -68,6 +73,7 @@ Most screens, layouts, and navigation stacks are defined in the /app directory.
 . Expo Vector Icons
 
 
+
 🧹 Reset Project
 
 When you're ready to start fresh, run:
@@ -75,6 +81,7 @@ When you're ready to start fresh, run:
 npm run reset-project
 ```
 This command moves the current code to an app-example directory and creates a blank app directory for a clean start.
+
 
 
 🌍 Join the Community
@@ -86,10 +93,12 @@ This command moves the current code to an app-example directory and creates a bl
 . React Native Community
 
 
+
 🧾 License
 
 This project is licensed under the MIT License.
 Feel free to use and modify it for your own projects.
+
 
 
 💡 Author
