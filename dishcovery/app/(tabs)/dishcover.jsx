@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,19 +6,36 @@ import {
   ScrollView, 
   TouchableOpacity, 
   Image, 
-  StyleSheet, 
+  StyleSheet,
+  ActivityIndicator 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import recipes from '../recipe/recipe';
+import { recipeAPI } from '../services/api';
 
 export default function Dishcover() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [recentSearches, setRecentSearches] = useState(['Jollof Rice', 'Egusi Soup', 'Pounded Yam']);
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const safeRecipes = Array.isArray(recipes) ? recipes : [];
+  useEffect(() => {
+    loadRecipes();
+  }, []);
+
+  const loadRecipes = async () => {
+    try {
+      setLoading(true);
+      const data = await recipeAPI.getAllRecipes();
+      setRecipes(data);
+    } catch (error) {
+      console.error('Failed to fetch recipes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = (text) => {
     setSearchQuery(text);
@@ -29,17 +46,14 @@ export default function Dishcover() {
   };
 
   const handleBlur = () => {
-    // Delay to allow click on dropdown items
     setTimeout(() => setShowDropdown(false), 200);
   };
 
-  // Search using both 'name' and 'title', and 'aboutrecipe' and 'description'
   const searchResults = searchQuery.length > 0 
-    ? safeRecipes.filter(recipe => {
+    ? recipes.filter(recipe => {
         const query = searchQuery.toLowerCase();
-        // Handle both 'name' and 'title' properties
-        const recipeName = recipe?.name || recipe?.title || '';
-        const recipeDesc = recipe?.aboutrecipe || recipe?.description || '';
+        const recipeName = recipe?.name || '';
+        const recipeDesc = recipe?.description || '';
         const nameMatch = recipeName.toLowerCase().includes(query);
         const descMatch = recipeDesc.toLowerCase().includes(query);
         return nameMatch || descMatch;
@@ -47,7 +61,6 @@ export default function Dishcover() {
     : [];
 
   const handleRecipePress = (recipeId, recipeName) => {
-    // Add to recent searches
     if (!recentSearches.includes(recipeName)) {
       setRecentSearches([recipeName, ...recentSearches].slice(0, 5));
     }
@@ -55,6 +68,15 @@ export default function Dishcover() {
     setSearchQuery('');
     router.push(`/recipe/${recipeId}`);
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.header}>Dishcovery</Text>
+        <ActivityIndicator size="large" color="#FF6347" style={{ marginTop: 50 }} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -68,7 +90,7 @@ export default function Dishcover() {
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search any meal, ingredient or cousine"
+            placeholder="Search any meal, ingredient or cuisine"
             placeholderTextColor="#999"
             value={searchQuery}
             onChangeText={handleSearch}
@@ -101,10 +123,10 @@ export default function Dishcover() {
                       <TouchableOpacity
                         key={recipe.id}
                         style={styles.searchDropdownItem}
-                        onPress={() => handleRecipePress(recipe.id, recipe.name || recipe.title)}
+                        onPress={() => handleRecipePress(recipe.id, recipe.name)}
                       >
                         <Text style={styles.searchDropdownText}>
-                          {recipe.name || recipe.title}
+                          {recipe.name}
                         </Text>
                       </TouchableOpacity>
                     ))
@@ -126,16 +148,11 @@ export default function Dishcover() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.grid}>
-          {safeRecipes.length > 0 ? (
+          {recipes.length > 0 ? (
             <>
-              {safeRecipes.map((recipe, index) => {
-                // Calculate position in the repeating pattern of 23
+              {recipes.map((recipe, index) => {
                 const positionInPattern = index % 23;
-                
-                // Positions for vertical rectangles (tall): 3, 8, 11, 16, 19
                 const isVerticalRectangle = [3, 8, 11, 16, 19].includes(positionInPattern);
-                
-                // Position for grey box: 4
                 const isGreyBox = positionInPattern === 4;
                 
                 if (isGreyBox) {
@@ -151,23 +168,30 @@ export default function Dishcover() {
                     <TouchableOpacity
                       key={recipe.id}
                       style={styles.verticalRectangleItem}
-                      onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name || recipe.title)}
+                      onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name)}
                       disabled={showDropdown}
                     >
-                      <Image source={recipe.image} style={styles.gridImage} />
+                      <Image 
+                        source={{ uri: recipe.image }} 
+                        style={styles.gridImage}
+                        resizeMode="cover"
+                      />
                     </TouchableOpacity>
                   );
                 }
                 
-                // Default square item
                 return (
                   <TouchableOpacity
                     key={recipe.id}
                     style={styles.gridItem}
-                    onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name || recipe.title)}
+                    onPress={() => !showDropdown && handleRecipePress(recipe.id, recipe.name)}
                     disabled={showDropdown}
                   >
-                    <Image source={recipe.image} style={styles.gridImage} />
+                    <Image 
+                      source={{ uri: recipe.image }} 
+                      style={styles.gridImage}
+                      resizeMode="cover"
+                    />
                   </TouchableOpacity>
                 );
               })}
@@ -182,7 +206,6 @@ export default function Dishcover() {
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -214,6 +237,11 @@ const styles = StyleSheet.create({
   searchDropdownText: {
     fontSize: 15,
     color: '#666',
+    fontFamily: 'GoogleSans-Regular',
+  },
+  noRecipesText: {
+    fontSize: 16,
+    color: '#999',
     fontFamily: 'GoogleSans-Regular',
   },
   searchContainer: {
@@ -291,15 +319,16 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     padding: 2,
   },
-  largeGridItem: {
-    width: '66.66%',
-    aspectRatio: 2,
+  verticalRectangleItem: {
+    width: '33.33%',
+    height: 200,
     padding: 2,
   },
   gridImage: {
     width: '100%',
     height: '100%',
     borderRadius: 6,
+    backgroundColor: '#f0f0f0',
   },
   greyBox: {
     width: '100%',
@@ -313,10 +342,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
-  },
-  noRecipesText: {
-    fontSize: 16,
-    color: '#999',
-    fontFamily: 'GoogleSans-Regular',
   },
 });
