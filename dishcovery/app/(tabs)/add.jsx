@@ -111,7 +111,7 @@ export default function Add() {
         <Text style={styles.label}>Cuisine</Text>
         <TextInput
           style={styles.input}
-          placeholder="What cousine is this?"
+          placeholder="What cuisine is this?"
           placeholderTextColor="#999"
           value={formData.cuisine}
           onChangeText={(text) => setFormData({ ...formData, cuisine: text })}

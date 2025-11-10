@@ -1,19 +1,21 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Reviews() {
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Mock reviews data - Backend: await reviewAPI.getMyReviews();
   const reviews = [
     {
       id: 1,
       recipe: {
+        id: 'jollof-rice-001',
         name: "Jollof Rice",
-        categories: ["Lunch", "Dinner"],
+        category: "Nigerian",
         time: "90 mins",
         likes: 13,
         comments: 5,
@@ -27,98 +29,130 @@ export default function Reviews() {
       ],
       reviewCount: 11,
     },
+    {
+      id: 2,
+      recipe: {
+        id: 'seafood-okra-002',
+        name: "Seafood Okra Soup",
+        category: "Nigerian",
+        time: "30 mins",
+        likes: 26,
+        comments: 2,
+        flag: "🇳🇬",
+        image: require("../../assets/images/recipeimages/okra.png"),
+      },
+      reviewers: [
+        { name: "Chef_dammy", image: "https://i.pravatar.cc/50?img=1", time: "2d" },
+        { name: "OkraLover", image: "https://i.pravatar.cc/50?img=4", time: "1d" },
+      ],
+      reviewCount: 8,
+    },
   ];
 
+  const filteredReviews = reviews.filter(review =>
+    review.recipe.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleViewReviews = (recipeId) => {
+    // Navigate to SeeReview page with recipe ID
+    router.push(`/seereview?id=${recipeId}`);
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="#000" />
+          <Ionicons name="chevron-back" size={28} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Reviews</Text>
         <TouchableOpacity>
-          <Ionicons name="menu" size={24} color="#000" />
+          <Ionicons name="menu" size={28} color="#000" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {reviews.map((item) => (
-          <View key={item.id} style={styles.reviewCard}>
-            {/* Recipe Info */}
-            <View style={styles.recipeHeader}>
-              <Image source={item.recipe.image} style={styles.recipeImage} />
-              <View style={styles.recipeInfo}>
-                <Text style={styles.recipeName}>{item.recipe.name}</Text>
-                <View style={styles.categoryTags}>
-                  {item.recipe.categories.map((cat, index) => (
-                    <View key={index} style={styles.categoryTag}>
-                      <Text style={styles.categoryTagText}>{cat}</Text>
-                    </View>
-                  ))}
-                </View>
-                <View style={styles.stats}>
-                  <View style={styles.statItem}>
-                    <Ionicons name="time-outline" size={12} color="#FF6347" />
-                    <Text style={styles.statText}>{item.recipe.time}</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Ionicons name="heart" size={12} color="#FF6347" />
-                    <Text style={styles.statText}>{item.recipe.likes}</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Ionicons name="chatbubble" size={12} color="#FF6347" />
-                    <Text style={styles.statText}>{item.recipe.comments}</Text>
-                  </View>
-                  <Text style={styles.flag}>{item.recipe.flag}</Text>
-                </View>
-              </View>
-            </View>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search dishes"
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
 
-            {/* Reviewers */}
-            <View style={styles.reviewersSection}>
-              <View style={styles.reviewerImages}>
-                {item.reviewers.slice(0, 3).map((reviewer, index) => (
-                  <Image
-                    key={index}
-                    source={{ uri: reviewer.image }}
-                    style={[styles.reviewerImage, { marginLeft: index * -10 }]}
-                  />
-                ))}
-              </View>
-              <Text style={styles.reviewersText}>
-                Reviewed by {item.reviewers[0].name} and others
-              </Text>
-              <TouchableOpacity style={styles.viewReviewsBtn}>
-                <Text style={styles.viewReviewsText}>View Reviews</Text>
-                <Ionicons name="chevron-forward" size={16} color="#FF6347" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Individual Reviews */}
-            {item.reviewers.map((reviewer, index) => (
-              <View key={index} style={styles.reviewItem}>
-                <Image source={{ uri: reviewer.image }} style={styles.reviewerAvatar} />
-                <View style={styles.reviewContent}>
-                  <View style={styles.reviewHeader}>
-                    <Text style={styles.reviewerName}>{reviewer.name}</Text>
-                    <Text style={styles.reviewTime}>{reviewer.time}</Text>
-                  </View>
-                  <Text style={styles.reviewText}>
-                    Perfectly spiced and rich in flavor! The grains stayed separate, and the aroma filled my kitchen. This is the real party food!
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {filteredReviews.length > 0 ? (
+          filteredReviews.map((item) => (
+            <View key={item.id} style={styles.reviewCard}>
+              {/* Recipe Info */}
+              <View style={styles.recipeHeader}>
+                <Image source={item.recipe.image} style={styles.recipeImage} />
+                <View style={styles.recipeInfo}>
+                  <Text style={styles.recipeName} numberOfLines={1}>
+                    {item.recipe.name}
                   </Text>
-                  <TouchableOpacity>
-                    <Text style={styles.replyText}>Reply</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.likeSection}>
-                  <Ionicons name="heart-outline" size={20} color="#666" />
-                  <Text style={styles.likeCount}>{item.reviewCount}</Text>
+                  <View style={styles.categoryTags}>
+                    <View style={styles.categoryTag}>
+                      <Text style={styles.categoryTagText}>{item.recipe.category}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.stats}>
+                    <View style={styles.statItem}>
+                      <Ionicons name="time" size={13} color="#ff4458" />
+                      <Text style={styles.statText}>{item.recipe.time}</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Ionicons name="thumbs-up" size={13} color="#ff4458" />
+                      <Text style={styles.statText}>{item.recipe.likes}</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Ionicons name="chatbubble" size={13} color="#ff4458" />
+                      <Text style={styles.statText}>{item.recipe.comments}</Text>
+                    </View>
+                    <Text style={styles.flag}>{item.recipe.flag}</Text>
+                  </View>
                 </View>
               </View>
-            ))}
+
+              {/* Reviewers Section */}
+              <View style={styles.reviewersSection}>
+                <View style={styles.reviewersRow}>
+                  <View style={styles.reviewerImages}>
+                    {item.reviewers.slice(0, 3).map((reviewer, index) => (
+                      <Image
+                        key={index}
+                        source={{ uri: reviewer.image }}
+                        style={[styles.reviewerImage, { marginLeft: index === 0 ? 0 : -12 }]}
+                      />
+                    ))}
+                  </View>
+                  <Text style={styles.reviewersText}>
+                    Reviewed by <Text style={styles.reviewerNameHighlight}>{item.reviewers[0].name}</Text> and others
+                  </Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.viewReviewsBtn}
+                  onPress={() => handleViewReviews(item.recipe.id)}
+                >
+                  <Text style={styles.viewReviewsText}>View Reviews</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#ff4458" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <Ionicons name="document-text-outline" size={64} color="#ccc" />
+            <Text style={styles.emptyText}>No reviews found</Text>
+            <Text style={styles.emptySubtext}>Your recipe reviews will appear here</Text>
           </View>
-        ))}
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -129,22 +163,45 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  scrollContent: {
+    paddingBottom: 100, // Extra padding for bottom navigation
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    height: 48,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
     color: '#1a1a1a',
   },
   reviewCard: {
     backgroundColor: '#F5F5F5',
-    margin: 16,
-    borderRadius: 12,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 16,
     padding: 16,
   },
   recipeHeader: {
@@ -152,17 +209,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   recipeImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
+    width: 100,
+    height: 100,
+    borderRadius: 12,
     marginRight: 12,
   },
   recipeInfo: {
     flex: 1,
+    justifyContent: 'center',
   },
   recipeName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1a1a1a',
     marginBottom: 8,
   },
@@ -172,10 +230,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   categoryTag: {
-    backgroundColor: '#FF6347',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
+    backgroundColor: '#ff4458',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   categoryTagText: {
     color: '#fff',
@@ -190,92 +248,78 @@ const styles = StyleSheet.create({
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
   },
   statText: {
-    fontSize: 11,
-    color: '#666',
+    fontSize: 12,
+    color: '#1a1a1a',
+    fontWeight: '500',
   },
   flag: {
-    fontSize: 14,
+    fontSize: 16,
   },
   reviewersSection: {
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#E0E0E0',
     paddingTop: 12,
-    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  reviewersRow: {
+    flex: 1,
+    marginRight: 12,
   },
   reviewerImages: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   reviewerImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     borderWidth: 2,
     borderColor: '#fff',
   },
   reviewersText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#666',
-    marginBottom: 8,
+  },
+  reviewerNameHighlight: {
+    fontWeight: '600',
+    color: '#1a1a1a',
   },
   viewReviewsBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#ff4458',
+    borderRadius: 8,
   },
   viewReviewsText: {
-    fontSize: 14,
-    color: '#FF6347',
-    fontWeight: '600',
-  },
-  reviewItem: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  reviewerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  reviewContent: {
-    flex: 1,
-  },
-  reviewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  reviewerName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  reviewTime: {
-    fontSize: 12,
-    color: '#999',
-  },
-  reviewText: {
     fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
-    marginBottom: 6,
+    color: '#ff4458',
+    fontWeight: '600',
   },
-  replyText: {
-    fontSize: 12,
-    color: '#666',
-  },
-  likeSection: {
+  emptyState: {
     alignItems: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 40,
   },
-  likeCount: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#999',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#ccc',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });

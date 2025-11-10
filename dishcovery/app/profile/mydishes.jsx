@@ -23,7 +23,6 @@ export default function MyDishes() {
 
   const handleShare = (recipe) => {
     Alert.alert("Share", `Sharing ${recipe.name}`);
-    // Backend: Implement share functionality
   };
 
   const handleDelete = (recipeId) => {
@@ -36,7 +35,6 @@ export default function MyDishes() {
           text: "Delete", 
           style: "destructive",
           onPress: () => {
-            // Backend: await recipeAPI.delete(recipeId);
             Alert.alert("Success", "Recipe deleted");
           }
         }
@@ -49,7 +47,7 @@ export default function MyDishes() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="#000" />
+          <Ionicons name="chevron-back" size={28} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Dishes</Text>
         <Image 
@@ -103,39 +101,52 @@ export default function MyDishes() {
       >
         {filteredRecipes.length > 0 ? (
           filteredRecipes.map((recipe) => (
-            <View key={recipe.id} style={styles.recipeCard}>
+            <TouchableOpacity 
+              key={recipe.id} 
+              style={styles.recipeCard}
+              activeOpacity={0.7}
+            >
+              {/* Recipe Image */}
               <Image source={recipe.image} style={styles.recipeImage} />
+              
+              {/* Recipe Content */}
               <View style={styles.recipeContent}>
-                <Text style={styles.recipeName}>{recipe.name}</Text>
+                <Text style={styles.recipeName} numberOfLines={1}>
+                  {recipe.name}
+                </Text>
                 
+                {/* Category Tags */}
                 <View style={styles.categoryTags}>
-                  {recipe.categories?.map((cat, index) => (
+                  {recipe.categories?.slice(0, 2).map((cat, index) => (
                     <View key={index} style={styles.categoryTag}>
                       <Text style={styles.categoryTagText}>{cat}</Text>
                     </View>
                   ))}
                 </View>
 
+                {/* Stats Row */}
                 <View style={styles.recipeStats}>
                   <View style={styles.statItem}>
-                    <Ionicons name="time-outline" size={14} color="#FF6347" />
+                    <Ionicons name="time" size={13} color="#ff4458" />
                     <Text style={styles.statText}>{recipe.time}</Text>
                   </View>
                   <View style={styles.statItem}>
-                    <Ionicons name="heart" size={14} color="#FF6347" />
-                    <Text style={styles.statText}>{recipe.likes || 0}</Text>
+                    <Ionicons name="thumbs-up" size={13} color="#ff4458" />
+                    <Text style={styles.statText}>{recipe.likes || 13}</Text>
                   </View>
                   <View style={styles.statItem}>
-                    <Ionicons name="chatbubble" size={14} color="#FF6347" />
-                    <Text style={styles.statText}>{recipe.comments || 0}</Text>
+                    <Ionicons name="chatbubble" size={13} color="#ff4458" />
+                    <Text style={styles.statText}>{recipe.comments || 5}</Text>
                   </View>
                   <Text style={styles.flag}>{recipe.flag}</Text>
                 </View>
 
+                {/* Description */}
                 <Text style={styles.recipeDesc} numberOfLines={3}>
                   {recipe.aboutrecipe}
                 </Text>
 
+                {/* Footer with Author and Actions */}
                 <View style={styles.recipeFooter}>
                   <View style={styles.authorInfo}>
                     <Image 
@@ -144,25 +155,26 @@ export default function MyDishes() {
                     />
                     <View>
                       <Text style={styles.authorName}>You</Text>
-                      <Text style={styles.timePosted}>{recipe.chef?.timePosted}</Text>
+                      <Text style={styles.timePosted}>3 months ago</Text>
                     </View>
                   </View>
                   <View style={styles.actions}>
                     <TouchableOpacity onPress={() => handleShare(recipe)}>
-                      <Ionicons name="share-social" size={22} color="#FF6347" />
+                      <Ionicons name="share-social-outline" size={24} color="#ff4458" />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDelete(recipe.id)}>
-                      <Ionicons name="trash" size={22} color="#FF6347" />
+                      <Ionicons name="trash-outline" size={24} color="#ff4458" />
                     </TouchableOpacity>
                   </View>
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ))
         ) : (
           <View style={styles.emptyState}>
             <Ionicons name="restaurant-outline" size={64} color="#ccc" />
             <Text style={styles.emptyText}>No dishes found</Text>
+            <Text style={styles.emptySubtext}>Start creating your own recipes!</Text>
           </View>
         )}
       </ScrollView>
@@ -179,96 +191,102 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#1a1a1a',
   },
   headerImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
-    marginHorizontal: 16,
-    marginVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    height: 48,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 12,
-    fontSize: 14,
+    fontSize: 15,
     color: '#1a1a1a',
   },
   categoryScroll: {
     maxHeight: 50,
+    marginBottom: 8,
   },
   categoryContent: {
-    paddingHorizontal: 16,
-    gap: 8,
+    paddingHorizontal: 20,
   },
   categoryBtn: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#ddd',
-    marginRight: 8,
+    marginRight: 10,
+    backgroundColor: '#fff',
   },
   categoryBtnActive: {
-    backgroundColor: '#FF6347',
-    borderColor: '#FF6347',
+    backgroundColor: '#ff4458',
+    borderColor: '#ff4458',
   },
   categoryText: {
     fontSize: 14,
     color: '#666',
+    fontWeight: '500',
   },
   categoryTextActive: {
     color: '#fff',
     fontWeight: '600',
   },
   recipesList: {
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 20,
   },
   recipeCard: {
     backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 16,
     overflow: 'hidden',
   },
   recipeImage: {
     width: '100%',
-    height: 180,
+    height: 200,
+    resizeMode: 'cover',
   },
   recipeContent: {
     padding: 16,
   },
   recipeName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1a1a1a',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   categoryTags: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   categoryTag: {
-    backgroundColor: '#FF6347',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: '#ff4458',
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
   categoryTagText: {
     color: '#fff',
@@ -279,7 +297,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   statItem: {
     flexDirection: 'row',
@@ -287,41 +305,47 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 13,
+    color: '#1a1a1a',
+    fontWeight: '500',
   },
   flag: {
     fontSize: 16,
+    marginLeft: 4,
   },
   recipeDesc: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
-    lineHeight: 20,
-    marginBottom: 12,
+    lineHeight: 19,
+    marginBottom: 14,
   },
   recipeFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
   },
   authorInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   authorImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
   authorName: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1a1a1a',
   },
   timePosted: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#999',
+    marginTop: 2,
   },
   actions: {
     flexDirection: 'row',
@@ -329,11 +353,17 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
     color: '#999',
-    marginTop: 12,
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#ccc',
+    marginTop: 8,
   },
 });

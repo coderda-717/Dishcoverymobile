@@ -1,285 +1,238 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const API_BASE_URL = 'https://dishcovery-backend-1.onrender.com/api';
 
-// ============ AUTH API ============
+// Helper function to get auth token
+const getAuthToken = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    return token;
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    return null;
+  }
+};
+
+// Helper function to create headers
+const createHeaders = async (includeAuth = false) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+
+  if (includeAuth) {
+    const token = await getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
+};
+
+// Auth API
 export const authAPI = {
-  // Signup new user
-  signup: async (name, email, password) => {
+  signup: async (userData) => {
     try {
+      console.log('Signing up with:', { ...userData, password: '***' });
+      
       const response = await fetch(`${API_BASE_URL}/auth/signup`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password })
+        headers: await createHeaders(),
+        body: JSON.stringify(userData),
       });
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Signup failed');
+      const data = await response.json();
+      console.log('Signup response:', response.ok, data);
+      
+      if (response.ok && data.token && data.user) {
+        // Save token and user data
+        await AsyncStorage.setItem('userToken', data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        return { success: true, data };
       }
       
-      return await response.json();
+      return { 
+        success: false, 
+        data, 
+        error: data.error || data.message || 'Signup failed' 
+      };
     } catch (error) {
       console.error('Signup error:', error);
-      throw error;
+      return { 
+        success: false, 
+        error: error.message || 'Network error occurred' 
+      };
     }
   },
 
-  // Login user
   login: async (email, password) => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        headers: await createHeaders(),
+        body: JSON.stringify({ email, password }),
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Login failed');
-      }
-      
       const data = await response.json();
-      // Returns: { token, user: { id, name, email } }
-      return data;
+      if (response.ok) {
+        // Save token and user data
+        await AsyncStorage.setItem('userToken', data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+      }
+      return { success: response.ok, data };
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   },
 
-  // Logout (client-side only for now)
   logout: async () => {
-    // Clear local storage
-    // await AsyncStorage.removeItem('userToken');
-    // await AsyncStorage.removeItem('userData');
-    return { success: true };
-  },
-};
-
-// ============ USER API ============
-export const userAPI = {
-  // Get current user profile
-  getProfile: async () => {
     try {
-      const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/users/me`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch profile');
-      }
-      
-      return await response.json();
-      // Returns: { id, name, email }
+      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.removeItem('userData');
+      return { success: true };
     } catch (error) {
-      console.error('Get profile error:', error);
-      throw error;
+      console.error('Logout error:', error);
+      return { success: false, error: error.message };
     }
   },
 
-  // Get user's recipes
-  getUserRecipes: async (userId) => {
+  getCurrentUser: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users/${userId}/recipes`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch user recipes');
-      }
-      
-      return await response.json();
+      const userData = await AsyncStorage.getItem('userData');
+      return userData ? JSON.parse(userData) : null;
     } catch (error) {
-      console.error('Get user recipes error:', error);
-      throw error;
+      console.error('Get current user error:', error);
+      return null;
     }
   },
 };
 
-// ============ RECIPE API ============
+// Recipe API
 export const recipeAPI = {
-  // Get all recipes
   getAllRecipes: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/recipes`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch recipes');
-      }
-      
-      return await response.json();
-      // Returns array of recipes
+      const response = await fetch(`${API_BASE_URL}/recipes`, {
+        method: 'GET',
+        headers: await createHeaders(),
+      });
+      const data = await response.json();
+      return response.ok ? data : [];
     } catch (error) {
       console.error('Get all recipes error:', error);
-      throw error;
+      return [];
     }
   },
 
-  // Get single recipe by ID
-  getRecipeById: async (recipeId) => {
+  getRecipeById: async (id) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/recipes/${recipeId}`);
-      
-      if (!response.ok) {
-        throw new Error('Recipe not found');
-      }
-      
-      return await response.json();
+      const response = await fetch(`${API_BASE_URL}/recipes/${id}`, {
+        method: 'GET',
+        headers: await createHeaders(),
+      });
+      const data = await response.json();
+      return { success: response.ok, data };
     } catch (error) {
-      console.error('Get recipe error:', error);
-      throw error;
+      console.error('Get recipe by ID error:', error);
+      return { success: false, error: error.message };
     }
   },
 
-  // Create new recipe (with image)
   createRecipe: async (recipeData) => {
     try {
-      const token = await getToken();
+      const token = await getAuthToken();
+      if (!token) {
+        return { success: false, error: 'No authentication token found' };
+      }
+
       const formData = new FormData();
       
-      // Append recipe fields
-      formData.append('name', recipeData.name);
-      formData.append('category', recipeData.category || 'Nigerian');
-      formData.append('cookingTime', recipeData.cookingTime);
-      formData.append('prepTime', recipeData.prepTime);
-      formData.append('rating', recipeData.rating || 0);
-      formData.append('description', recipeData.description);
-      formData.append('ingredients', JSON.stringify(recipeData.ingredients));
-      formData.append('instructions', JSON.stringify(recipeData.instructions));
-      
-      // Append image file
-      if (recipeData.imageUri) {
+      // Add image
+      if (recipeData.image) {
+        const uriParts = recipeData.image.split('.');
+        const fileType = uriParts[uriParts.length - 1];
+        
         formData.append('image', {
-          uri: recipeData.imageUri,
-          type: 'image/jpeg',
-          name: 'recipe.jpg',
+          uri: recipeData.image,
+          name: `photo.${fileType}`,
+          type: `image/${fileType}`,
         });
       }
-      
+
+      // Add other fields
+      formData.append('name', recipeData.name);
+      formData.append('category', recipeData.category);
+      formData.append('cookingTime', recipeData.cookingTime);
+      formData.append('prepTime', recipeData.prepTime || '10');
+      formData.append('rating', recipeData.rating || '0');
+      formData.append('description', recipeData.description || '');
+      formData.append('ingredients', JSON.stringify(recipeData.ingredients));
+      formData.append('instructions', JSON.stringify(recipeData.instructions));
+
       const response = await fetch(`${API_BASE_URL}/recipes`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
-        body: formData
+        body: formData,
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create recipe');
-      }
-      
-      return await response.json();
+
+      const data = await response.json();
+      return { success: response.ok, data };
     } catch (error) {
       console.error('Create recipe error:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   },
 
-  // Search recipes
   searchRecipes: async (query) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/recipes/search?q=${encodeURIComponent(query)}`);
-      
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-      
-      return await response.json();
+      const response = await fetch(`${API_BASE_URL}/recipes/search?q=${encodeURIComponent(query)}`, {
+        method: 'GET',
+        headers: await createHeaders(),
+      });
+      const data = await response.json();
+      return response.ok ? data : [];
     } catch (error) {
       console.error('Search recipes error:', error);
-      throw error;
+      return [];
+    }
+  },
+};
+
+// User API
+export const userAPI = {
+  getProfile: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/me`, {
+        method: 'GET',
+        headers: await createHeaders(true),
+      });
+      const data = await response.json();
+      return { success: response.ok, data };
+    } catch (error) {
+      console.error('Get profile error:', error);
+      return { success: false, error: error.message };
     }
   },
 
-  // Update recipe
-  updateRecipe: async (recipeId, recipeData) => {
+  getUserRecipes: async (userId) => {
     try {
-      const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/recipes/${recipeId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(recipeData)
+      const response = await fetch(`${API_BASE_URL}/users/${userId}/recipes`, {
+        method: 'GET',
+        headers: await createHeaders(),
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update recipe');
-      }
-      
-      return await response.json();
+      const data = await response.json();
+      return response.ok ? data : [];
     } catch (error) {
-      console.error('Update recipe error:', error);
-      throw error;
+      console.error('Get user recipes error:', error);
+      return [];
     }
   },
+};
 
-  // Delete recipe
-  deleteRecipe: async (recipeId) => {
-    try {
-      const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/recipes/${recipeId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete recipe');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Delete recipe error:', error);
-      throw error;
-    }
-  },
-
-  // Save/favorite recipe
-  saveRecipe: async (recipeId) => {
-    try {
-      const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/recipes/save/${recipeId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to save recipe');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Save recipe error:', error);
-      throw error;
-    }
-  },
-
-  // Get user's saved recipes
-  getSavedRecipes: async () => {
-    try {
-      const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/recipes/saved/user`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch saved recipes');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Get saved recipes error:', error);
-      throw error;
-    }
-  },
+export default {
+  authAPI,
+  recipeAPI,
+  userAPI,
 };

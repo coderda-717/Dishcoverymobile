@@ -10,7 +10,7 @@ const RecipeCard = ({ recipe, onCategoryPress }) => {
     categories: [recipe.category],
     time: `${recipe.cookingTime} mins`,
     description: recipe.description,
-    image: recipe.image ? { uri: recipe.image } : require('../assets/images/placeholder.png'),
+    image: recipe.image ? { uri: recipe.image } : require('../assets/images/recipeimages/placeholder.png'),
     rating: recipe.rating,
     chef: {
       name: recipe.userId ? `User ${recipe.userId}` : 'Chef',

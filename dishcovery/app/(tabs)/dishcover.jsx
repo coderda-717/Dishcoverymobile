@@ -73,7 +73,7 @@ export default function Dishcover() {
     return (
       <SafeAreaView style={styles.container}>
         <Text style={styles.header}>Dishcovery</Text>
-        <ActivityIndicator size="large" color="#FF6347" style={{ marginTop: 50 }} />
+        <ActivityIndicator size="large" color="#ff4458" style={{ marginTop: 50 }} />
       </SafeAreaView>
     );
   }

@@ -34,17 +34,23 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const data = await authAPI.login(email, password);
+      const result = await authAPI.login(email, password);
       
-      // Save token and user data
-      await AsyncStorage.setItem('userToken', data.token);
-      await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+      if (result.success) {
+        const { token: userToken, user: userData } = result.data;
+        
+        // Save token and user data
+        await AsyncStorage.setItem('userToken', userToken);
+        await AsyncStorage.setItem('userData', JSON.stringify(userData));
+        
+        setToken(userToken);
+        setUser(userData);
+        setIsAuthenticated(true);
+        
+        return { success: true };
+      }
       
-      setToken(data.token);
-      setUser(data.user);
-      setIsAuthenticated(true);
-      
-      return { success: true };
+      return { success: false, error: result.data?.error || 'Login failed' };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: error.message };
@@ -53,20 +59,40 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (name, email, password) => {
     try {
-      const data = await authAPI.signup(name, email, password);
+      const result = await authAPI.signup({ name, email, password });
       
-      // Save token and user data
-      await AsyncStorage.setItem('userToken', data.token);
-      await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+      if (result.success && result.data) {
+        // Handle both possible response structures
+        const userToken = result.data.token;
+        const userData = result.data.user;
+        
+        // Validate that we have required data
+        if (!userToken || !userData) {
+          console.error('Invalid signup response:', result.data);
+          return { 
+            success: false, 
+            error: 'Invalid response from server. Please try again.' 
+          };
+        }
+        
+        // Save token and user data
+        await AsyncStorage.setItem('userToken', userToken);
+        await AsyncStorage.setItem('userData', JSON.stringify(userData));
+        
+        setToken(userToken);
+        setUser(userData);
+        setIsAuthenticated(true);
+        
+        return { success: true };
+      }
       
-      setToken(data.token);
-      setUser(data.user);
-      setIsAuthenticated(true);
-      
-      return { success: true };
+      return { 
+        success: false, 
+        error: result.data?.error || result.error || 'Signup failed' 
+      };
     } catch (error) {
       console.error('Signup error:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: error.message || 'Network error occurred' };
     }
   };
 
@@ -89,12 +115,57 @@ export const AuthProvider = ({ children }) => {
 
   const refreshUserProfile = async () => {
     try {
-      const userData = await userAPI.getProfile();
-      await AsyncStorage.setItem('userData', JSON.stringify(userData));
-      setUser(userData);
+      const result = await userAPI.getProfile();
+      
+      if (result.success) {
+        await AsyncStorage.setItem('userData', JSON.stringify(result.data));
+        setUser(result.data);
+      }
     } catch (error) {
       console.error('Refresh profile error:', error);
     }
+  };
+
+  // Get user data with fallback
+  const getUserData = () => {
+    if (user) {
+      return {
+        id: user.id,
+        firstName: user.name?.split(' ')[0] || 'User',
+        lastName: user.name?.split(' ').slice(1).join(' ') || '',
+        username: `@${user.name?.replace(/\s+/g, '').toLowerCase() || 'user'}`,
+        email: user.email,
+        profileImage: "https://i.pravatar.cc/300?img=50",
+        stats: {
+          recipiesTried: 0,
+          favourites: 0,
+          reviews: 0
+        },
+        preferences: {
+          dietary: [],
+          favoriteCuisines: []
+        }
+      };
+    }
+    
+    // Return guest data if not authenticated
+    return {
+      id: null,
+      firstName: "Guest",
+      lastName: "User",
+      username: "@guest",
+      email: "guest@dishcovery.com",
+      profileImage: "https://i.pravatar.cc/300?img=50",
+      stats: {
+        recipiesTried: 0,
+        favourites: 0,
+        reviews: 0
+      },
+      preferences: {
+        dietary: [],
+        favoriteCuisines: []
+      }
+    };
   };
 
   return (
@@ -106,7 +177,8 @@ export const AuthProvider = ({ children }) => {
       login, 
       signup,
       logout,
-      refreshUserProfile
+      refreshUserProfile,
+      getUserData
     }}>
       {children}
     </AuthContext.Provider>
@@ -120,3 +192,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+export default AuthContext;
