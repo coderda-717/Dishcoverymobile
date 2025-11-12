@@ -8,12 +8,19 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthInput from "../components/input";
 import AuthButton from "../components/button";
 import DishSafeAreaView from "../components/DishSafearea";
 import AuthStyles from '../(auth)/AuthStyle';
-import { useAuth } from '../context/AuthContext';
 import StatusModal from '../components/StatusModal';
+
+const API_BASE_URL = 'https://dishcovery-backend-1.onrender.com/api';
+
+// Helper to extract error message from response
+const getErrorMessage = (data) => {
+  return data?.error || data?.message || 'An error occurred. Please try again.';
+};
 
 const SignUpScreen = () => {
   const [form, setForm] = useState({
@@ -32,9 +39,9 @@ const SignUpScreen = () => {
     confirmPassword: "",
   });
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState(null); // 'error' or 'success'
+  const [modalType, setModalType] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
-  const { signup } = useAuth();
 
   const handleChange = (name, value) => {
     setForm({ ...form, [name]: value });
@@ -97,26 +104,46 @@ const SignUpScreen = () => {
     setLoading(true);
 
     try {
-      const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`;
+      console.log('Starting signup process with:', form.email.trim());
+      
+      // Backend expects firstName and lastName separately
+      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email: form.email.trim(),
+          password: form.password,
+        }),
+      });
 
-      console.log('Starting signup process...');
-      const result = await signup(fullName, form.email.trim(), form.password);
-      console.log('Signup result:', result);
+      const data = await response.json();
+      console.log('Signup response:', response.status, data);
 
-      if (result.success) {
+      if (response.ok && data.token) {
+        // Save user data
+        await AsyncStorage.setItem('userToken', data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        
+        console.log('Signup successful');
+        
         // Show success modal
         setModalType('success');
         setModalVisible(true);
       } else {
-        const errorMessage = result.error || 'Could not create account. Please try again.';
-        console.error('Signup failed:', errorMessage);
-        // Show error modal
+        // Handle error response
+        const message = getErrorMessage(data);
+        console.error('Signup failed:', message);
+        setErrorMessage(message);
         setModalType('error');
         setModalVisible(true);
       }
     } catch (error) {
       console.error('Sign up error:', error);
-      // Show error modal
+      setErrorMessage('Network error. Please check your connection and try again.');
       setModalType('error');
       setModalVisible(true);
     } finally {
@@ -135,13 +162,12 @@ const SignUpScreen = () => {
       confirmPassword: "",
     });
     // Navigate to main app
-    router.replace("/(tabs)");
+    router.replace("/(auth)/signin");
   };
 
   const handleRetry = () => {
     setModalVisible(false);
-    // Optionally retry signup
-    // handleSignUp();
+    handleSignUp();
   };
 
   const handleCloseModal = () => {
@@ -255,6 +281,7 @@ const SignUpScreen = () => {
       <StatusModal
         visible={modalVisible}
         type={modalType}
+        message={errorMessage}
         onClose={modalType === 'success' ? handleSuccessModalClose : handleCloseModal}
         onRetry={handleRetry}
       />

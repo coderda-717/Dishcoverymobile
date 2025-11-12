@@ -43,15 +43,16 @@ import { COLORS, SIZES } from "../../theme/theme";
   },
   formContainer: {
      marginTop: -10,
-     marginBottom: -30,
+     marginBottom: -5,
   },
   buttonContainer: {
-    marginTop: -5,
+    marginTop: 7,
+    marginBottom: -10,
   },
   link: {
     textAlign: "center",
     color: COLORS.red,
-    marginBottom: 40,
+    marginBottom: 42,
     fontSize: SIZES.regular,
     fontFamily: 'GoogleSans-Regular',
   },

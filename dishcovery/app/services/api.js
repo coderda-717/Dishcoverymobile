@@ -203,18 +203,31 @@ export const recipeAPI = {
 // User API
 export const userAPI = {
   getProfile: async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/me`, {
-        method: 'GET',
-        headers: await createHeaders(true),
-      });
-      const data = await response.json();
-      return { success: response.ok, data };
-    } catch (error) {
-      console.error('Get profile error:', error);
-      return { success: false, error: error.message };
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, { // ✅ Changed here
+      method: 'GET',
+      headers: await createHeaders(true),
+    });
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('⚠️ Unexpected response (not JSON):', text.slice(0, 200));
+      return {
+        success: false,
+        error: 'Server did not return valid JSON. Possibly wrong endpoint.',
+      };
     }
-  },
+
+    const data = await response.json();
+    return { success: response.ok, data };
+  } catch (error) {
+    console.error('Get profile error:', error);
+    return { success: false, error: error.message };
+  }
+},
+
+ 
 
   getUserRecipes: async (userId) => {
     try {
@@ -229,6 +242,24 @@ export const userAPI = {
       return [];
     }
   },
+
+  changePassword: async (oldPassword, newPassword) => {
+  try {
+   const response = await userAPI.changePassword(current, newPass);
+if (!response.success) throw new Error(response.data?.error || 'Failed');
+
+
+
+    const data = await response.json();
+    return { success: response.ok, data };
+
+  } 
+  catch (error) {
+    console.error('Change password error:', error);
+    return { success: false, error: error.message };
+  }
+},
+
 };
 
 export default {

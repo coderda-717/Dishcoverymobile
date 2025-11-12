@@ -3,32 +3,73 @@ import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Alert, Act
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../context/AuthContext';
-import { userData as fallbackUserData } from '../data/userdata';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const DEFAULT_PROFILE_IMAGE = 'https://res.cloudinary.com/dguseowoa/image/upload/v1762823979/amala_and_gbegiri_lkovb8.jpg';
 
 export default function Profile() {
   const router = useRouter();
-  const { user, isAuthenticated, logout, getUserData } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [profileData, setProfileData] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
     loadProfileData();
-  }, [user, isAuthenticated]);
+  }, []);
 
   const loadProfileData = async () => {
     try {
-      if (isAuthenticated && user) {
-        // Use authenticated user data
-        const data = getUserData();
-        setProfileData(data);
+      setLoading(true);
+      const token = await AsyncStorage.getItem('userToken');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      
+      if (token && userDataStr) {
+        const user = JSON.parse(userDataStr);
+        setIsAuthenticated(true);
+        setUserData({
+          firstName: user.firstName || 'User',
+          lastName: user.lastName || '',
+          email: user.email || '',
+          username: `@${(user.firstName || 'user').toLowerCase()}`,
+          profileImage: DEFAULT_PROFILE_IMAGE,
+          stats: {
+            recipiesTried: 0,
+            favourites: 0,
+            reviews: 0
+          }
+        });
       } else {
-        // Use fallback data for guests
-        setProfileData(fallbackUserData);
+        // Guest mode
+        setIsAuthenticated(false);
+        setUserData({
+          firstName: 'Guest',
+          lastName: 'User',
+          email: '',
+          username: '@guest',
+          profileImage: DEFAULT_PROFILE_IMAGE,
+          stats: {
+            recipiesTried: 0,
+            favourites: 0,
+            reviews: 0
+          }
+        });
       }
     } catch (error) {
       console.error('Error loading profile data:', error);
-      setProfileData(fallbackUserData);
+      // Set guest mode on error
+      setIsAuthenticated(false);
+      setUserData({
+        firstName: 'Guest',
+        lastName: 'User',
+        email: '',
+        username: '@guest',
+        profileImage: DEFAULT_PROFILE_IMAGE,
+        stats: {
+          recipiesTried: 0,
+          favourites: 0,
+          reviews: 0
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -60,12 +101,16 @@ export default function Profile() {
           style: "destructive",
           onPress: async () => {
             try {
-              const result = await logout();
-              if (result.success) {
-                router.replace('/(auth)/signin');
-              } else {
-                Alert.alert('Error', 'Failed to log out. Please try again.');
-              }
+              // Clear all stored data
+              await AsyncStorage.removeItem('userToken');
+              await AsyncStorage.removeItem('userData');
+              
+              // Reset state
+              setIsAuthenticated(false);
+              setUserData(null);
+              
+              // Navigate to signin
+              router.replace('/(auth)/signin');
             } catch (error) {
               console.error('Logout error:', error);
               Alert.alert('Error', 'Failed to log out. Please try again.');
@@ -102,8 +147,6 @@ export default function Profile() {
     );
   }
 
-  const displayData = profileData || fallbackUserData;
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -116,17 +159,17 @@ export default function Profile() {
           )}
           
           <Image 
-            source={{ uri: displayData.profileImage }} 
+            source={{ uri: userData?.profileImage || DEFAULT_PROFILE_IMAGE }} 
             style={styles.profileImage}
           />
           <Text style={styles.name}>
-            {displayData.firstName} {displayData.lastName}
+            {userData?.firstName || 'Guest'} {userData?.lastName || 'User'}
           </Text>
-          <Text style={styles.username}>{displayData.username}</Text>
+          <Text style={styles.username}>{userData?.username || '@guest'}</Text>
 
           <TouchableOpacity 
             style={styles.editButton}
-            onPress={() => handleProtectedAction('/profile/edit-profile')}
+            onPress={() => handleProtectedAction('/profile/editprofile')}
           >
             <Text style={styles.editButtonText}>Edit Profile</Text>
             <Ionicons name="create-outline" size={18} color="#fff" />
@@ -137,15 +180,15 @@ export default function Profile() {
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Recipes Tried</Text>
-            <Text style={styles.statValue}>{displayData.stats.recipiesTried}</Text>
+            <Text style={styles.statValue}>{userData?.stats?.recipiesTried || 0}</Text>
           </View>
           <View style={[styles.statItem, styles.statBorder]}>
             <Text style={styles.statLabel}>Favourites</Text>
-            <Text style={styles.statValue}>{displayData.stats.favourites}</Text>
+            <Text style={styles.statValue}>{userData?.stats?.favourites || 0}</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Reviews</Text>
-            <Text style={styles.statValue}>{displayData.stats.reviews}</Text>
+            <Text style={styles.statValue}>{userData?.stats?.reviews || 0}</Text>
           </View>
         </View>
 
@@ -289,34 +332,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: 'GoogleSans-Medium',
   },
- statsContainer: {
-  flexDirection: 'row',
-  marginHorizontal: 16,
-  marginTop: 20,
-  marginBottom: 24,
-  alignItems: 'center', // Add this - aligns all stat items to center
-},
-statItem: {
-  flex: 1,
-  alignItems: 'center',
-},
-statBorder: {
-  borderLeftWidth: 1,
-  borderRightWidth: 1,
-  borderColor: '#e0e0e0',
-},
-statLabel: {
-  fontSize: 13,
-  color: '#666',
-  marginBottom: 4,
-  fontFamily: 'GoogleSans-Regular',
-},
-statValue: {
-  fontSize: 24,
-  fontWeight: 'bold',
-  color: '#ff4458',
-  fontFamily: 'GoogleSans-Bold',
-  lineHeight: 24, // Add this - prevents font rendering shifts
+  statsContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statBorder: {
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  statLabel: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 4,
+    fontFamily: 'GoogleSans-Regular',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ff4458',
+    fontFamily: 'GoogleSans-Bold',
+    lineHeight: 24,
   },
   section: {
     marginBottom: 24,

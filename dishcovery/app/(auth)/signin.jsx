@@ -10,12 +10,18 @@ import StatusModal from '../components/StatusModal';
 
 const API_BASE_URL = 'https://dishcovery-backend-1.onrender.com/api';
 
+// Helper to extract error message from response
+const getErrorMessage = (data) => {
+  return data?.error || data?.message || 'An error occurred. Please try again.';
+};
+
 const SignInScreen = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState(null); // 'error' or 'success'
+  const [modalType, setModalType] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
 
   const handleChange = (name, value) => {
@@ -55,6 +61,8 @@ const SignInScreen = () => {
     setLoading(true);
 
     try {
+      console.log('Attempting login with:', form.email.trim());
+      
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -67,22 +75,31 @@ const SignInScreen = () => {
       });
 
       const data = await response.json();
+      console.log('Login response:', response.status, data);
 
-      if (response.ok) {
+      if (response.ok && data.token) {
+        // Save user data
         await AsyncStorage.setItem('userToken', data.token);
         await AsyncStorage.setItem('userData', JSON.stringify(data.user));
         
-        // Clear form and navigate
+        console.log('Login successful, navigating to main app');
+        
+        // Clear form
         setForm({ email: "", password: "" });
+        
+        // Navigate to main app
         router.replace("/(tabs)");
       } else {
-        // Show error modal
+        // Handle error response
+        const message = data.error || data.message || 'Invalid email or password';
+        console.error('Login failed:', message);
+        setErrorMessage(message);
         setModalType('error');
         setModalVisible(true);
       }
     } catch (error) {
       console.error('Login error:', error);
-      // Show error modal for network issues
+      setErrorMessage('Network error. Please check your connection and try again.');
       setModalType('error');
       setModalVisible(true);
     } finally {
@@ -92,8 +109,7 @@ const SignInScreen = () => {
 
   const handleRetry = () => {
     setModalVisible(false);
-    // Optionally retry the login
-    // handleLogin();
+    handleLogin();
   };
 
   const handleCloseModal = () => {
@@ -186,6 +202,7 @@ const SignInScreen = () => {
       <StatusModal
         visible={modalVisible}
         type={modalType}
+        message={errorMessage}
         onClose={handleCloseModal}
         onRetry={handleRetry}
       />
