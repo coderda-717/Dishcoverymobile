@@ -1,13 +1,22 @@
-import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Stack } from 'expo-router';
+import { useFonts } from 'expo-font';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 export default function AuthLayout() {
-  const router = useRouter();
- 
+  const [fontsLoaded] = useFonts({
+    'GoogleSans-Regular': require('../../assets/fonts/GoogleSans-Regular.ttf'),
+    'GoogleSans-Medium': require('../../assets/fonts/GoogleSans-Medium.ttf'),
+    'GoogleSans-Bold': require('../../assets/fonts/GoogleSans-Bold.ttf'),
+  });
 
-
+  // Show loading while fonts are loading
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
 
   return (
     <Stack
@@ -41,3 +50,4 @@ const styles = StyleSheet.create({
     backgroundColor: '#C85A3F',
   },
 });
+

@@ -1,18 +1,29 @@
 import React, { useEffect } from 'react';
-import { View, Image, Text, ActivityIndicator } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+import { View, Image, Text, ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useAuth } from './context/AuthContext';
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { loading, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace("/(auth)/signin"); // ✅ go to Sign In
-    }, 2000);
+    // Wait for auth context to finish loading
+    if (!loading) {
+      const timer = setTimeout(() => {
+        if (isAuthenticated) {
+          // User is logged in, go to main app
+          router.replace("/(tabs)");
+        } else {
+          // User is not logged in, show onboarding
+          router.replace("/(auth)/onboarding");
+        }
+      }, 2000);
 
-    return () => clearTimeout(timer);
-  }, []);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, isAuthenticated]);
   
   return (
     <SafeAreaView style={{ backgroundColor: "#ffffff", flex: 1 }}>
@@ -49,5 +60,5 @@ export default function SplashScreen() {
         <ActivityIndicator size="small" color="#FF4C4C" style={{ marginTop: 20 }} />
       </View>
     </SafeAreaView>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -7,10 +7,8 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions,
-  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
@@ -63,55 +61,10 @@ const slides = [
 export default function Onboarding() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [checking, setChecking] = useState(true);
   const slidesRef = useRef(null);
 
-  // 🔍 Check if user has onboarded or logged in before
-  useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      try {
-        const hasOnboarded = await AsyncStorage.getItem("hasOnboarded");
-        const token = await AsyncStorage.getItem("userToken");
-
-        if (token) {
-          // ✅ User already logged in → Go to home
-          router.replace("/(tabs)/home");
-          return;
-        }
-
-        if (hasOnboarded) {
-          // ✅ User already onboarded but not logged in → Go to sign in
-          router.replace("/(auth)/signin");
-          return;
-        }
-      } catch (error) {
-        console.error("Error checking onboarding:", error);
-      } finally {
-        setChecking(false);
-      }
-    };
-
-    checkOnboardingStatus();
-  }, []);
-
-  // ⏳ Show loading indicator while checking
-  if (checking) {
-    return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#ff4458" />
-        <Text style={styles.loadingText}>Loading...</Text>
-      </SafeAreaView>
-    );
-  }
-
-  // ✅ Save onboarding completion
-  const completeOnboarding = async () => {
-    try {
-      await AsyncStorage.setItem("hasOnboarded", "true");
-      router.replace("/(auth)/signin");
-    } catch (error) {
-      console.error("Error saving onboarding:", error);
-    }
+  const completeOnboarding = () => {
+    router.replace("/(auth)/signin");
   };
 
   const handleNext = () => {
@@ -131,35 +84,6 @@ export default function Onboarding() {
     setCurrentIndex(index);
   };
 
-  const renderItem = ({ item }) => (
-    <View style={[styles.slide, { width }]}>
-      <View style={styles.illustration}>
-        <View style={styles.starGroup}>
-          <Image
-            source={require("../../assets/images/Group2.png")}
-            style={styles.starGroupImage}
-          />
-        </View>
-
-        <View style={styles.circle}>
-          <Image source={item.source} style={item.style} />
-        </View>
-
-        <View style={styles.starGroup}>
-          <Image
-            source={require("../../assets/images/Group1.png")}
-            style={styles.starGroupImage}
-          />
-        </View>
-      </View>
-
-      <View style={styles.textBox}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.desc}>{item.description}</Text>
-      </View>
-    </View>
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
@@ -168,12 +92,40 @@ export default function Onboarding() {
 
       <FlatList
         data={slides}
-        renderItem={renderItem}
+        renderItem={({ item }) => (
+          <View style={[styles.slide, { width }]}>
+            <View style={styles.illustration}>
+              <View style={styles.starGroup}>
+                <Image
+                  source={require("../../assets/images/Group2.png")}
+                  style={styles.starGroupImage}
+                />
+              </View>
+
+              <View style={styles.circle}>
+                <Image source={item.source} style={item.style} />
+              </View>
+
+              <View style={styles.starGroup}>
+                <Image
+                  source={require("../../assets/images/Group1.png")}
+                  style={styles.starGroupImage}
+                />
+              </View>
+            </View>
+
+            <View style={styles.textBox}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.desc}>{item.description}</Text>
+            </View>
+          </View>
+        )}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
         ref={slidesRef}
+        keyExtractor={(item) => item.id}
       />
 
       <View style={styles.footer}>
@@ -202,16 +154,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#A6370E",
     alignItems: "center",
     justifyContent: "center",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-  },
-  loadingText: {
-    marginTop: 10,
-    color: "#555",
   },
   slide: {
     flex: 1,

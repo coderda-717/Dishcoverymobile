@@ -1,27 +1,43 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Image, Text, View, StyleSheet } from 'react-native';
+import { Image, Text, View, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
 
 const TabIcon = ({ focused, activeIcon, defaultIcon, label }) => {
   return (
-   <SafeAreaView>
-    <View style={styles.tabIconContainer}>
-      {focused && <View style={styles.activeBar} />}
-      <Image 
-        source={focused ? activeIcon : defaultIcon}
-        style={styles.tabIcon}
-        resizeMode="contain"
-      />
-      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-        {label}
-      </Text>
-    </View>
+    <SafeAreaView>
+      <View style={styles.tabIconContainer}>
+        {focused && <View style={styles.activeBar} />}
+        <Image 
+          source={focused ? activeIcon : defaultIcon}
+          style={styles.tabIcon}
+          resizeMode="contain"
+        />
+        <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+          {label}
+        </Text>
+      </View>
     </SafeAreaView>
   );
 };
 
 export default function TabLayout() {
+  const [fontsLoaded] = useFonts({
+    'GoogleSans-Regular': require('../../assets/fonts/GoogleSans-Regular.ttf'),
+    'GoogleSans-Medium': require('../../assets/fonts/GoogleSans-Medium.ttf'),
+    'GoogleSans-Bold': require('../../assets/fonts/GoogleSans-Bold.ttf'),
+  });
+
+  // Show loading while fonts are loading
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#ff4458" />
+      </View>
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -92,6 +108,12 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
   tabBar: {
     backgroundColor: '#fff',
     borderTopWidth: 1,
@@ -120,9 +142,6 @@ const styles = StyleSheet.create({
     height: 24,
     marginBottom: 6,
     marginRight: 3,
-   
-   
-    
   },
   tabLabel: {
     fontSize: 11,
