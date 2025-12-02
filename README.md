@@ -109,7 +109,7 @@ Feel free to use and modify it for your own projects.
 
 💡 Author
 
-Group 15 Mobile Dev Team :
+Group 15 Mobile Dev Team Tech crush:
 
 . Otunla  Oluwadamilola
 
