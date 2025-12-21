@@ -39,58 +39,24 @@ export default function Profile() {
           }
         });
       } else {
-        // Guest mode
+        // NO AUTO GUEST MODE - User must sign in
         setIsAuthenticated(false);
-        setUserData({
-          firstName: 'Guest',
-          lastName: 'User',
-          email: '',
-          username: '@guest',
-          profileImage: DEFAULT_PROFILE_IMAGE,
-          stats: {
-            recipiesTried: 0,
-            favourites: 0,
-            reviews: 0
-          }
-        });
+        setUserData(null);
       }
     } catch (error) {
       console.error('Error loading profile data:', error);
-      // Set guest mode on error
       setIsAuthenticated(false);
-      setUserData({
-        firstName: 'Guest',
-        lastName: 'User',
-        email: '',
-        username: '@guest',
-        profileImage: DEFAULT_PROFILE_IMAGE,
-        stats: {
-          recipiesTried: 0,
-          favourites: 0,
-          reviews: 0
-        }
-      });
+      setUserData(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    if (!isAuthenticated) {
-      Alert.alert(
-        'Not Logged In',
-        'You are browsing as a guest. Sign in to access all features.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Sign In', 
-            onPress: () => router.push('/(auth)/signin')
-          }
-        ]
-      );
-      return;
-    }
+  const handleSignIn = () => {
+    router.push('/(auth)/signin');
+  };
 
+  const handleLogout = () => {
     Alert.alert(
       "Log Out",
       "Are you sure you want to log out?",
@@ -101,15 +67,12 @@ export default function Profile() {
           style: "destructive",
           onPress: async () => {
             try {
-              // Clear all stored data
               await AsyncStorage.removeItem('userToken');
               await AsyncStorage.removeItem('userData');
               
-              // Reset state
               setIsAuthenticated(false);
               setUserData(null);
               
-              // Navigate to signin
               router.replace('/(auth)/signin');
             } catch (error) {
               console.error('Logout error:', error);
@@ -147,25 +110,55 @@ export default function Profile() {
     );
   }
 
+  // Show sign-in prompt if not authenticated
+  if (!isAuthenticated || !userData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.emptyStateContainer}>
+          <View style={styles.emptyState}>
+            <Image 
+              source={require('../../assets/images/icon.png')}
+              style={styles.emptyStateLogo}
+            />
+            <Text style={styles.emptyStateTitle}>Welcome to Dishcovery!</Text>
+            <Text style={styles.emptyStateText}>
+              Sign in to save your favorite recipes, write reviews, and share your culinary creations.
+            </Text>
+            
+            <TouchableOpacity 
+              style={styles.signInButton}
+              onPress={handleSignIn}
+            >
+              <Ionicons name="log-in-outline" size={20} color="#fff" />
+              <Text style={styles.signInButtonText}>Sign In</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.createAccountButton}
+              onPress={() => router.push('/(auth)/signup')}
+            >
+              <Text style={styles.createAccountText}>Create Account</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // Show profile when authenticated
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <View style={styles.header}>
-          {!isAuthenticated && (
-            <View style={styles.guestBadge}>
-              <Text style={styles.guestBadgeText}>Guest Mode</Text>
-            </View>
-          )}
-          
           <Image 
             source={{ uri: userData?.profileImage || DEFAULT_PROFILE_IMAGE }} 
             style={styles.profileImage}
           />
           <Text style={styles.name}>
-            {userData?.firstName || 'Guest'} {userData?.lastName || 'User'}
+            {userData?.firstName || 'User'} {userData?.lastName || ''}
           </Text>
-          <Text style={styles.username}>{userData?.username || '@guest'}</Text>
+          <Text style={styles.username}>{userData?.username || '@user'}</Text>
 
           <TouchableOpacity 
             style={styles.editButton}
@@ -250,24 +243,14 @@ export default function Profile() {
           </TouchableOpacity>
         </View>
 
-        {/* Action Button */}
-        {!isAuthenticated ? (
-          <TouchableOpacity 
-            style={styles.signInButton}
-            onPress={() => router.push('/(auth)/signin')}
-          >
-            <Text style={styles.signInText}>Sign In</Text>
-            <Ionicons name="log-in-outline" size={20} color="#ff4458" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={handleLogout}
-          >
-            <Text style={styles.logoutText}>Log Out</Text>
-            <Ionicons name="log-out-outline" size={20} color="#ff4458" />
-          </TouchableOpacity>
-        )}
+        {/* Logout Button */}
+        <TouchableOpacity 
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutText}>Log Out</Text>
+          <Ionicons name="log-out-outline" size={20} color="#ff4458" />
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -278,25 +261,68 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  header: {
+  emptyStateContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
-    position: 'relative',
+    paddingHorizontal: 32,
   },
-  guestBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 16,
-    backgroundColor: '#FFE5E5',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+  emptyState: {
+    alignItems: 'center',
+    width: '100%',
   },
-  guestBadgeText: {
-    fontSize: 12,
+  emptyStateLogo: {
+    width: 100,
+    height: 100,
+    marginBottom: 24,
+    resizeMode: 'contain',
+  },
+  emptyStateTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 12,
+    textAlign: 'center',
+    fontFamily: 'GoogleSans-Bold',
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+    fontFamily: 'GoogleSans-Regular',
+  },
+  signInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ff4458',
+    paddingHorizontal: 48,
+    paddingVertical: 16,
+    borderRadius: 8,
+    gap: 8,
+    width: '100%',
+    marginBottom: 12,
+  },
+  signInButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'GoogleSans-Medium',
+  },
+  createAccountButton: {
+    paddingVertical: 16,
+  },
+  createAccountText: {
+    fontSize: 16,
     color: '#ff4458',
     fontWeight: '600',
     fontFamily: 'GoogleSans-Medium',
+  },
+  header: {
+    alignItems: 'center',
+    paddingVertical: 20,
   },
   profileImage: {
     width: 120,
@@ -385,23 +411,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1a1a1a',
     fontFamily: 'GoogleSans-Regular',
-  },
-  signInButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFE5E5',
-    marginHorizontal: 16,
-    marginVertical: 20,
-    paddingVertical: 16,
-    borderRadius: 8,
-    gap: 8,
-  },
-  signInText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ff4458',
-    fontFamily: 'GoogleSans-Medium',
   },
   logoutButton: {
     flexDirection: 'row',
