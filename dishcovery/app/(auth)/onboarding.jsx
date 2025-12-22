@@ -64,6 +64,8 @@ export default function Onboarding() {
   const slidesRef = useRef(null);
 
   const completeOnboarding = () => {
+    // ALWAYS go to sign in - no authentication check
+    // User must login every time they open the app
     router.replace("/(auth)/signin");
   };
 
