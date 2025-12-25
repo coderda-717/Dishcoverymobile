@@ -15,8 +15,12 @@ export const userData = {
     dietary: ["Vegetarian", "Gluten-Free"],
     favoriteCuisines: ["Nigerian", "Italian", "Asian"]
   }
+  
 };
 
+export default function UserData() {
+  return null;
+}
 // For backend integration, replace with:
 /*
 import { useAuth } from '../context/AuthContext';

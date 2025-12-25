@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     height: 60,
   },
   textBox: {
-    flex: 1,
+    flex: 0.6,
     backgroundColor: "#9c6a58ff",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
