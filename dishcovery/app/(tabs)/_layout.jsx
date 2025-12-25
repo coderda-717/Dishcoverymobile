@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#e0e0e0',
     height: 108,
     paddingBottom: 9,
-    paddingTop: 13,
+    paddingTop: 12,
   },
   tabIconContainer: {
     alignItems: 'center',
