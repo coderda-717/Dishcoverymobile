@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get("window");
 
@@ -63,10 +64,26 @@ export default function Onboarding() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const slidesRef = useRef(null);
 
-  const completeOnboarding = () => {
-    // ALWAYS go to sign in - no authentication check
-    // User must login every time they open the app
-    router.replace("/(auth)/signin");
+  const completeOnboarding = async () => {
+    try {
+      // Check if user is already authenticated
+      const token = await AsyncStorage.getItem('userToken');
+      const userData = await AsyncStorage.getItem('userData');
+      
+      if (token && userData) {
+        // User is authenticated, go to main app
+        console.log('User authenticated, navigating to main app');
+        router.replace("/(tabs)");
+      } else {
+        // User not authenticated, go to sign in
+        console.log('User not authenticated, navigating to signin');
+        router.replace("/(auth)/signin");
+      }
+    } catch (error) {
+      console.error('Onboarding completion error:', error);
+      // On error, default to sign in
+      router.replace("/(auth)/signin");
+    }
   };
 
   const handleNext = () => {

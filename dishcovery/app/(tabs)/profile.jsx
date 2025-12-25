@@ -39,21 +39,21 @@ export default function Profile() {
           }
         });
       } else {
-        // NO AUTO GUEST MODE - User must sign in
+        // NO AUTHENTICATION - Redirect to sign in
         setIsAuthenticated(false);
         setUserData(null);
+        // Redirect to splash -> onboarding -> signin flow
+        router.replace('/splash');
       }
     } catch (error) {
       console.error('Error loading profile data:', error);
       setIsAuthenticated(false);
       setUserData(null);
+      // Redirect to splash on error
+      router.replace('/splash');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSignIn = () => {
-    router.push('/(auth)/signin');
   };
 
   const handleLogout = () => {
@@ -73,7 +73,8 @@ export default function Profile() {
               setIsAuthenticated(false);
               setUserData(null);
               
-              router.replace('/(auth)/signin');
+              // Redirect to splash screen (which will show onboarding then signin)
+              router.replace('/splash');
             } catch (error) {
               console.error('Logout error:', error);
               Alert.alert('Error', 'Failed to log out. Please try again.');
@@ -86,17 +87,8 @@ export default function Profile() {
 
   const handleProtectedAction = (path) => {
     if (!isAuthenticated) {
-      Alert.alert(
-        'Sign In Required',
-        'Please sign in to access this feature.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Sign In', 
-            onPress: () => router.push('/(auth)/signin')
-          }
-        ]
-      );
+      // This should never happen as unauthenticated users are redirected
+      router.replace('/splash');
       return;
     }
     router.push(path);
@@ -110,39 +102,10 @@ export default function Profile() {
     );
   }
 
-  // Show sign-in prompt if not authenticated
+  // If not authenticated, they should have been redirected already
+  // But as a safety measure, show nothing
   if (!isAuthenticated || !userData) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.emptyStateContainer}>
-          <View style={styles.emptyState}>
-            <Image 
-              source={require('../../assets/images/icon.png')}
-              style={styles.emptyStateLogo}
-            />
-            <Text style={styles.emptyStateTitle}>Welcome to Dishcovery!</Text>
-            <Text style={styles.emptyStateText}>
-              Sign in to save your favorite recipes, write reviews, and share your culinary creations.
-            </Text>
-            
-            <TouchableOpacity 
-              style={styles.signInButton}
-              onPress={handleSignIn}
-            >
-              <Ionicons name="log-in-outline" size={20} color="#fff" />
-              <Text style={styles.signInButtonText}>Sign In</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.createAccountButton}
-              onPress={() => router.push('/(auth)/signup')}
-            >
-              <Text style={styles.createAccountText}>Create Account</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
+    return null;
   }
 
   // Show profile when authenticated
@@ -260,65 +223,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  emptyStateContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  emptyState: {
-    alignItems: 'center',
-    width: '100%',
-  },
-  emptyStateLogo: {
-    width: 100,
-    height: 100,
-    marginBottom: 24,
-    resizeMode: 'contain',
-  },
-  emptyStateTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 12,
-    textAlign: 'center',
-    fontFamily: 'GoogleSans-Bold',
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
-    fontFamily: 'GoogleSans-Regular',
-  },
-  signInButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ff4458',
-    paddingHorizontal: 48,
-    paddingVertical: 16,
-    borderRadius: 8,
-    gap: 8,
-    width: '100%',
-    marginBottom: 12,
-  },
-  signInButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: 'GoogleSans-Medium',
-  },
-  createAccountButton: {
-    paddingVertical: 16,
-  },
-  createAccountText: {
-    fontSize: 16,
-    color: '#ff4458',
-    fontWeight: '600',
-    fontFamily: 'GoogleSans-Medium',
   },
   header: {
     alignItems: 'center',
