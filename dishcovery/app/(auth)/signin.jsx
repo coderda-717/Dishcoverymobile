@@ -1,301 +1,233 @@
-// dishcovery/app/(auth)/signin.jsx
-// ✅ FIXED VERSION - Properly integrated with backend
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  Keyboard,
-  TouchableWithoutFeedback,
-  ActivityIndicator,
-} from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthInput from '../components/input';
 import AuthButton from '../components/button';
+import DishSafeAreaView from '../components/DishSafearea';
+import AuthStyles from '../(auth)/AuthStyle';
 import StatusModal from '../components/StatusModal';
-import { authAPI } from '../services/api';
 
-const Signin = () => {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const API_BASE_URL = 'https://dishcovery-backend-1.onrender.com/api';
+
+// Helper to extract error message from response
+const getErrorMessage = (data) => {
+  return data?.error || data?.message || 'An error occurred. Please try again.';
+};
+
+const SignInScreen = () => {
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({ email: "", password: "" });
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState('error');
-  const [modalMessage, setModalMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [modalType, setModalType] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const router = useRouter();
 
-  const handleSignIn = async () => {
-    Keyboard.dismiss();
+  const handleChange = (name, value) => {
+    setForm({ ...form, [name]: value });
+    setErrors({ ...errors, [name]: "" });
+  };
 
-    // Validation
-    if (!email || !password) {
-      setModalMessage('Please fill in all fields');
-      setModalType('error');
-      setModalVisible(true);
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = { email: "", password: "" };
+
+    if (!form.email.trim()) {
+      newErrors.email = "Email is required";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+      newErrors.email = "Please enter a valid email";
+      isValid = false;
+    }
+
+    if (!form.password) {
+      newErrors.password = "Password is required";
+      isValid = false;
+    } else if (form.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleLogin = async () => {
+    if (!validateForm()) {
       return;
     }
 
-    if (!email.includes('@')) {
-      setModalMessage('Please enter a valid email address');
-      setModalType('error');
-      setModalVisible(true);
-      return;
-    }
-
-    setIsLoading(true);
+    setLoading(true);
 
     try {
-      console.log('Attempting login with:', email);
+      console.log('Attempting login with:', form.email.trim());
       
-      // Call real API
-      const result = await authAPI.login(email, password);
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: form.email.trim(),
+          password: form.password,
+        }),
+      });
 
-      console.log('Login result:', result);
+      const data = await response.json();
+      console.log('Login response:', response.status, data);
 
-      if (result.success) {
-        // Success! Navigate to main app
-        console.log('Login successful, navigating to tabs');
-        router.replace('/(tabs)');
+      if (response.ok && data.token) {
+        // Save user data
+        await AsyncStorage.setItem('userToken', data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        
+        console.log('Login successful, navigating to main app');
+        
+        // Clear form
+        setForm({ email: "", password: "" });
+        
+        // Navigate to main app
+        router.replace("/(tabs)");
       } else {
-        // Show error
-        setModalMessage(result.error || 'Login failed. Please check your credentials.');
+        // Handle error response
+        const message = data.error || data.message || 'Invalid email or password';
+        console.error('Login failed:', message);
+        setErrorMessage(message);
         setModalType('error');
         setModalVisible(true);
       }
     } catch (error) {
       console.error('Login error:', error);
-      setModalMessage('An unexpected error occurred. Please try again.');
+      setErrorMessage('Network error. Please check your connection and try again.');
       setModalType('error');
       setModalVisible(true);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = () => {
-    // TODO: Implement Google Sign-In
-    setModalMessage('Google Sign-In coming soon!');
-    setModalType('error');
-    setModalVisible(true);
-  };
-
-  const handleForgotPassword = () => {
-    router.push('/(auth)/forgot-password');
-  };
-
-  const handleSignUp = () => {
-    router.push('/(auth)/signup');
-  };
-
-  const closeModal = () => {
+  const handleRetry = () => {
     setModalVisible(false);
+    handleLogin();
   };
 
-  const retryLogin = () => {
+  const handleCloseModal = () => {
     setModalVisible(false);
-    handleSignIn();
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.content}>
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.title}>Welcome Back!</Text>
-              <Text style={styles.subtitle}>Sign in to continue</Text>
-            </View>
-
-            {/* Form */}
-            <View style={styles.form}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email</Text>
-                <AuthInput
-                  placeholder="Enter your email"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  editable={!isLoading}
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Password</Text>
-                <AuthInput
-                  placeholder="Enter your password"
-                  secureTextEntry={true}
-                  value={password}
-                  onChangeText={setPassword}
-                  editable={!isLoading}
-                />
-              </View>
-
-              <TouchableOpacity
-                style={styles.forgotPasswordButton}
-                onPress={handleForgotPassword}
-                disabled={isLoading}
-              >
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
-
-              <View style={styles.buttonContainer}>
-                <AuthButton
-                  title={isLoading ? 'Signing in...' : 'Sign In'}
-                  onPress={handleSignIn}
-                  type="primary"
-                />
-                {isLoading && (
-                  <ActivityIndicator
-                    size="small"
-                    color="#fff"
-                    style={styles.loadingIndicator}
-                  />
-                )}
-              </View>
-
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>OR</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              <AuthButton
-                title="Continue with Google"
-                onPress={handleGoogleSignIn}
-                type="google"
-              />
-            </View>
-
-            {/* Footer */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={handleSignUp} disabled={isLoading}>
-                <Text style={styles.signUpText}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
+    <DishSafeAreaView>
+      <ScrollView contentContainerStyle={AuthStyles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={{ flex: 1 }}>
+          <Image source={require("../../assets/images/image2.png")} style={AuthStyles.image2} />
+        </View>
+        
+        <View style={{ flex: 2, marginTop: 150 }}>
+          <View style={AuthStyles.headerContainer}>
+            <Image source={require("../../assets/images/icon.png")} style={AuthStyles.logo} />
+            <Text style={AuthStyles.title}>Welcome Back!</Text>
+            <Text style={AuthStyles.subtitle}>Please log in</Text>
           </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
+
+          <View style={AuthStyles.formContainer}>
+            <ScrollView>
+              <Text style={AuthStyles.label}>Email</Text>
+              <AuthInput 
+                placeholder="Email" 
+                value={form.email} 
+                onChangeText={(v) => handleChange("email", v)}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                editable={!loading}
+              />
+              {errors.email ? (
+                <Text style={styles.errorText}>{errors.email}</Text>
+              ) : null}
+
+              <Text style={AuthStyles.label}>Password</Text>
+              <AuthInput
+                placeholder="Password"
+                secureTextEntry
+                value={form.password}
+                onChangeText={(v) => handleChange("password", v)}
+                editable={!loading}
+              />
+              {errors.password ? (
+                <Text style={styles.errorText}>{errors.password}</Text>
+              ) : null}
+            </ScrollView>
+          </View>
+
+          <TouchableOpacity 
+            onPress={() => router.push("/(auth)/forgot-password")}
+            disabled={loading}
+          >
+            <Text style={AuthStyles.forgotLink}>Forgot Password?</Text>
+          </TouchableOpacity>
+
+          <View style={AuthStyles.buttonContainer}>
+            <AuthButton 
+              title={loading ? "Logging in..." : "Log In"} 
+              onPress={handleLogin}
+              disabled={loading}
+            />
+            {loading && (
+              <ActivityIndicator 
+                size="small" 
+                color="#FF6B35" 
+                style={styles.loader}
+              />
+            )}
+            
+            <AuthButton 
+              title="Continue with Google" 
+              type="google" 
+              onPress={() => {
+                // Google sign-in coming soon
+              }}
+              disabled={loading}
+            />
+          </View>
+
+          <TouchableOpacity 
+            onPress={() => router.push("/(auth)/signup")}
+            disabled={loading}
+          >
+            <Text style={AuthStyles.link}>Don't have an account? Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
       <StatusModal
         visible={modalVisible}
         type={modalType}
-        message={modalMessage}
-        onClose={closeModal}
-        onRetry={retryLogin}
+        message={errorMessage}
+        onClose={handleCloseModal}
+        onRetry={handleRetry}
       />
-    </KeyboardAvoidingView>
+    </DishSafeAreaView>
   );
 };
 
+export default SignInScreen;
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 40,
-  },
-  content: {
-    width: '100%',
-  },
-  header: {
+  headerContainer: {
+    alignItems: "center",
     marginBottom: 32,
+    marginTop: 140,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
+  errorText: {
+    color: '#FF0000',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
     marginBottom: 8,
-    fontFamily: 'GoogleSans-Bold',
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    fontFamily: 'GoogleSans-Regular',
-  },
-  form: {
-    marginBottom: 24,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 8,
-    fontFamily: 'GoogleSans-Medium',
-  },
-  forgotPasswordButton: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    color: '#FF4458',
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'GoogleSans-Medium',
-  },
-  buttonContainer: {
-    position: 'relative',
-  },
-  loadingIndicator: {
+  loader: {
     position: 'absolute',
     right: 20,
     top: 15,
   },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E0E0E0',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#999',
-    fontSize: 14,
-    fontWeight: '500',
-    fontFamily: 'GoogleSans-Regular',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  footerText: {
-    color: '#666',
-    fontSize: 14,
-    fontFamily: 'GoogleSans-Regular',
-  },
-  signUpText: {
-    color: '#FF4458',
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'GoogleSans-Medium',
-  },
 });
-
-export default Signin;

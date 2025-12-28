@@ -1,272 +1,273 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useRef } from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
-const OnboardingScreen = () => {
+const slides = [
+  {
+    id: "1",
+    title: "Discover Flavors That Bring People Together",
+    description:
+      "Explore authentic dishes, learn their stories, and share your love for food.",
+    source: require("../../assets/images/image4.png"),
+    style: {
+      position: "absolute",
+      right: -30,
+      top: -25,
+      width: 220,
+      height: 220,
+    },
+  },
+  {
+    id: "2",
+    title: "See What Others Think",
+    description:
+      "Read honest reviews, ratings, and stories from people who've tasted every dish — so you always know what's worth trying!",
+    source: require("../../assets/images/image5.png"),
+    style: {
+      position: "absolute",
+      right: 3,
+      top: 3,
+      width: 150,
+      height: 150,
+    },
+  },
+  {
+    id: "3",
+    title: "Save, Share & Savor Every Dish",
+    description:
+      "Save your favorite recipes, share your food moments, and keep your culinary journey alive — one plate at a time.",
+    source: require("../../assets/images/image6.png"),
+    style: {
+      position: "absolute",
+      right: 3,
+      top: 3,
+      width: 150,
+      height: 150,
+    },
+  },
+];
+
+export default function Onboarding() {
   const router = useRouter();
-  const [currentScreen, setCurrentScreen] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const slidesRef = useRef(null);
 
-  useEffect(() => {
-    checkFirstTimeUser();
-  }, []);
-
-  const checkFirstTimeUser = async () => {
+  const completeOnboarding = async () => {
     try {
-      const hasLoggedIn = await AsyncStorage.getItem('hasLoggedIn');
-      if (hasLoggedIn === 'true') {
-        // User has logged in before, skip onboarding
-        router.replace('/(tabs)');
+      // Check if user is already authenticated
+      const token = await AsyncStorage.getItem('userToken');
+      const userData = await AsyncStorage.getItem('userData');
+      
+      if (token && userData) {
+        // User is authenticated, go to main app
+        console.log('User authenticated, navigating to main app');
+        router.replace("/(tabs)");
+      } else {
+        // User not authenticated, go to sign in
+        console.log('User not authenticated, navigating to signin');
+        router.replace("/(auth)/signin");
       }
     } catch (error) {
-      console.error('Error checking first time user:', error);
+      console.error('Onboarding completion error:', error);
+      // On error, default to sign in
+      router.replace("/(auth)/signin");
     }
   };
 
   const handleNext = () => {
-    if (currentScreen < onboardingData.length - 1) {
-      setCurrentScreen(currentScreen + 1);
+    if (currentIndex < slides.length - 1) {
+      slidesRef.current.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      handleFinish();
+      completeOnboarding();
     }
   };
 
   const handleSkip = () => {
-    handleFinish();
+    completeOnboarding();
   };
 
-  const handleFinish = async () => {
-    try {
-      await AsyncStorage.setItem('onboardingCompleted', 'true');
-      router.replace('/auth/Signin');
-    } catch (error) {
-      console.error('Error saving onboarding completion:', error);
-    }
+  const handleScroll = (event) => {
+    const index = Math.round(event.nativeEvent.contentOffset.x / width);
+    setCurrentIndex(index);
   };
-
-  const onboardingData = [
-    {
-      id: 0,
-      type: 'logo',
-      title: 'Welcome to Dishcovery',
-      description: 'Discover and share amazing recipes',
-    },
-    {
-      id: 1,
-      image: require('../../../assets/images/onboarding1.png'),
-      title: 'Discover Recipes',
-      description: 'Explore thousands of delicious recipes from around the world',
-    },
-    {
-      id: 2,
-      image: require('../../../assets/images/onboarding2.png'),
-      title: 'Share Your Creations',
-      description: 'Share your own recipes and cooking experiences with the community',
-    },
-    {
-      id: 3,
-      image: require('../../../assets/images/onboarding3.png'),
-      title: 'Cook Together',
-      description: 'Connect with other food lovers and learn new cooking techniques',
-    },
-  ];
-
-  const currentData = onboardingData[currentScreen];
-
-  if (currentData.type === 'logo') {
-    return (
-      <View style={styles.logoContainer}>
-        <View style={styles.logoContent}>
-          <Image
-            source={require('../../../assets/images/icon.png')}
-            style={styles.appLogo}
-            resizeMode="contain"
-          />
-          <Text style={styles.appName}>Dishcovery</Text>
-          <Text style={styles.tagline}>Your Culinary Adventure Starts Here</Text>
-        </View>
-        
-        <TouchableOpacity
-          style={styles.letsGoButton}
-          onPress={handleNext}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.letsGoButtonText}>Let's go</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   return (
-    <View style={styles.container}>
-      {/* Skip Button */}
-      {currentScreen < onboardingData.length - 1 && (
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <Text style={styles.skipText}>Skip</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Content */}
-      <View style={styles.contentContainer}>
-        <Image
-          source={currentData.image}
-          style={styles.image}
-          resizeMode="contain"
-        />
-        <Text style={styles.title}>{currentData.title}</Text>
-        <Text style={styles.description}>{currentData.description}</Text>
-      </View>
-
-      {/* Pagination Dots */}
-      <View style={styles.pagination}>
-        {onboardingData.slice(1).map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.dot,
-              currentScreen === index + 1 && styles.activeDot,
-            ]}
-          />
-        ))}
-      </View>
-
-      {/* Next/Get Started Button */}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleNext}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.buttonText}>
-          {currentScreen === onboardingData.length - 1 ? 'Get Started' : 'Next'}
-        </Text>
+    <SafeAreaView style={styles.container}>
+      <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+        <Text style={styles.skipText}>Skip</Text>
       </TouchableOpacity>
-    </View>
+
+      <FlatList
+        data={slides}
+        renderItem={({ item }) => (
+          <View style={[styles.slide, { width }]}>
+            <View style={styles.illustration}>
+              <View style={styles.starGroup}>
+                <Image
+                  source={require("../../assets/images/Group2.png")}
+                  style={styles.starGroupImage}
+                />
+              </View>
+
+              <View style={styles.circle}>
+                <Image source={item.source} style={item.style} />
+              </View>
+
+              <View style={styles.starGroup}>
+                <Image
+                  source={require("../../assets/images/Group1.png")}
+                  style={styles.starGroupImage}
+                />
+              </View>
+            </View>
+
+            <View style={styles.textBox}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.desc}>{item.description}</Text>
+            </View>
+          </View>
+        )}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={handleScroll}
+        ref={slidesRef}
+        keyExtractor={(item) => item.id}
+      />
+
+      <View style={styles.footer}>
+        <View style={styles.dotsContainer}>
+          {slides.map((_, index) => (
+            <View
+              key={index}
+              style={[styles.dot, currentIndex === index && styles.activeDot]}
+            />
+          ))}
+        </View>
+
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+          <Text style={styles.nextText}>
+            {currentIndex === slides.length - 1 ? "Get Started" : "Next →"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  // Logo Screen Styles
-  logoContainer: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 60,
-  },
-  logoContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  appLogo: {
-    width: 150,
-    height: 150,
-    marginBottom: 24,
-  },
-  appName: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 8,
-    fontFamily: 'GoogleSans-Bold',
-  },
-  tagline: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    fontFamily: 'GoogleSans-Regular',
-  },
-  letsGoButton: {
-    backgroundColor: '#FF4458',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    width: '100%',
-  },
-  letsGoButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-    fontFamily: 'GoogleSans-Medium',
-  },
-
-  // Regular Onboarding Styles
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 24,
+    backgroundColor: "#A6370E",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  skipButton: {
-    alignSelf: 'flex-end',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    marginTop: 40,
-  },
-  skipText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '500',
-    fontFamily: 'GoogleSans-Medium',
-  },
-  contentContainer: {
+  slide: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
   },
-  image: {
-    width: width * 0.8,
-    height: height * 0.4,
-    marginBottom: 40,
+  illustration: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 40,
+  },
+  circle: {
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    borderWidth: 30,
+    borderColor: "#FFD166",
+    marginVertical: 20,
+    overflow: "hidden",
+  },
+  starGroup: {
+    flexDirection: "row",
+    marginVertical: 15,
+  },
+  starGroupImage: {
+    width: 120,
+    height: 60,
+  },
+  textBox: {
+    flex: 0.6,
+    backgroundColor: "#9c6a58ff",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderColor: "#fff",
+    borderWidth: 1,
+    padding: 24,
+    alignItems: "center",
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 16,
-    textAlign: 'center',
-    fontFamily: 'GoogleSans-Bold',
-  },
-  description: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: 20,
-    fontFamily: 'GoogleSans-Regular',
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E0E0E0',
-    marginHorizontal: 4,
-  },
-  activeDot: {
-    backgroundColor: '#FF4458',
-    width: 24,
-  },
-  button: {
-    backgroundColor: '#FF4458',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 40,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-    fontFamily: 'GoogleSans-Medium',
+  desc: {
+    color: "#fff",
+    textAlign: "center",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  skipButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 2,
+    borderColor: "#fff",
+    borderWidth: 0.5,
+    borderRadius: 40,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+  },
+  skipText: {
+    color: "#fff",
+    fontSize: 14,
+  },
+  footer: {
+    position: "absolute",
+    bottom: 60,
+    width: "100%",
+    alignItems: "center",
+  },
+  dotsContainer: {
+    flexDirection: "row",
+    marginBottom: 16,
+  },
+  dot: {
+    width: 40,
+    height: 6,
+    backgroundColor: "#fff",
+    borderRadius: 2,
+    opacity: 0.5,
+    marginHorizontal: 3,
+  },
+  activeDot: {
+    opacity: 1,
+    backgroundColor: "#A6370E",
+  },
+  nextButton: {
+    backgroundColor: "#EB5017",
+    paddingVertical: 12,
+    paddingHorizontal: 120,
+    borderRadius: 10,
+  },
+  nextText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
-
-export default OnboardingScreen;
