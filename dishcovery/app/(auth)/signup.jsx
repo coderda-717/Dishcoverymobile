@@ -1,3 +1,5 @@
+// dishcovery/app/(auth)/signup.jsx
+// ✅ FIXED VERSION - Properly integrated with backend
 import React, { useState } from 'react';
 import {
   View,
@@ -9,11 +11,13 @@ import {
   TouchableOpacity,
   Keyboard,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AuthInput from '../components/input';
 import AuthButton from '../components/button';
 import StatusModal from '../components/StatusModal';
+import { authAPI } from '../services/api';
 
 const Signup = () => {
   const router = useRouter();
@@ -23,11 +27,16 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState('error');
+  const [modalMessage, setModalMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = () => {
     if (!name || !email || !password || !confirmPassword) {
       return { valid: false, message: 'Please fill in all fields' };
+    }
+
+    if (name.trim().length < 2) {
+      return { valid: false, message: 'Name must be at least 2 characters' };
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -48,9 +57,10 @@ const Signup = () => {
 
   const handleSignUp = async () => {
     Keyboard.dismiss();
-    
+
     const validation = validateForm();
     if (!validation.valid) {
+      setModalMessage(validation.message);
       setModalType('error');
       setModalVisible(true);
       return;
@@ -59,23 +69,37 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      // Your registration logic here
-      // const response = await api.post('/auth/register', { name, email, password });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('Attempting signup with:', { name, email });
 
-      // Show success modal
-      setModalType('success');
-      setModalVisible(true);
-      
-      // Navigate to sign in after a delay
-      setTimeout(() => {
-        setModalVisible(false);
-        router.replace('/auth/Signin');
-      }, 2000);
+      // Call real API
+      const result = await authAPI.signup({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      console.log('Signup result:', result);
+
+      if (result.success) {
+        // Show success modal
+        setModalMessage('Account created successfully!');
+        setModalType('success');
+        setModalVisible(true);
+
+        // Navigate to main app after a delay
+        setTimeout(() => {
+          setModalVisible(false);
+          router.replace('/(tabs)');
+        }, 2000);
+      } else {
+        // Show error
+        setModalMessage(result.error || 'Signup failed. Please try again.');
+        setModalType('error');
+        setModalVisible(true);
+      }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Signup error:', error);
+      setModalMessage('An unexpected error occurred. Please try again.');
       setModalType('error');
       setModalVisible(true);
     } finally {
@@ -84,12 +108,14 @@ const Signup = () => {
   };
 
   const handleGoogleSignUp = () => {
-    // Implement Google Sign-Up
-    console.log('Google Sign-Up pressed');
+    // TODO: Implement Google Sign-Up
+    setModalMessage('Google Sign-Up coming soon!');
+    setModalType('error');
+    setModalVisible(true);
   };
 
   const handleSignIn = () => {
-    router.push('/auth/Signin');
+    router.push('/(auth)/signin');
   };
 
   const closeModal = () => {
@@ -129,6 +155,7 @@ const Signup = () => {
                   value={name}
                   onChangeText={setName}
                   autoCapitalize="words"
+                  editable={!isLoading}
                 />
               </View>
 
@@ -140,6 +167,7 @@ const Signup = () => {
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={!isLoading}
                 />
               </View>
 
@@ -150,6 +178,7 @@ const Signup = () => {
                   secureTextEntry={true}
                   value={password}
                   onChangeText={setPassword}
+                  editable={!isLoading}
                 />
               </View>
 
@@ -160,6 +189,7 @@ const Signup = () => {
                   secureTextEntry={true}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
+                  editable={!isLoading}
                 />
               </View>
 
@@ -172,11 +202,20 @@ const Signup = () => {
                 </Text>
               </View>
 
-              <AuthButton
-                title={isLoading ? 'Creating Account...' : 'Sign Up'}
-                onPress={handleSignUp}
-                type="primary"
-              />
+              <View style={styles.buttonContainer}>
+                <AuthButton
+                  title={isLoading ? 'Creating Account...' : 'Sign Up'}
+                  onPress={handleSignUp}
+                  type="primary"
+                />
+                {isLoading && (
+                  <ActivityIndicator
+                    size="small"
+                    color="#fff"
+                    style={styles.loadingIndicator}
+                  />
+                )}
+              </View>
 
               <View style={styles.divider}>
                 <View style={styles.dividerLine} />
@@ -194,7 +233,7 @@ const Signup = () => {
             {/* Footer */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>Already have an account? </Text>
-              <TouchableOpacity onPress={handleSignIn}>
+              <TouchableOpacity onPress={handleSignIn} disabled={isLoading}>
                 <Text style={styles.signInText}>Sign In</Text>
               </TouchableOpacity>
             </View>
@@ -205,8 +244,9 @@ const Signup = () => {
       <StatusModal
         visible={modalVisible}
         type={modalType}
+        message={modalMessage}
         onClose={closeModal}
-        onRetry={retrySignUp}
+        onRetry={modalType === 'error' ? retrySignUp : undefined}
       />
     </KeyboardAvoidingView>
   );
@@ -268,6 +308,14 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#FF4458',
     fontWeight: '600',
+  },
+  buttonContainer: {
+    position: 'relative',
+  },
+  loadingIndicator: {
+    position: 'absolute',
+    right: 20,
+    top: 15,
   },
   divider: {
     flexDirection: 'row',

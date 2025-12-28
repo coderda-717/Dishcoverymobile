@@ -1,3 +1,5 @@
+// dishcovery/app/(auth)/signin.jsx
+// ✅ FIXED VERSION - Properly integrated with backend
 import React, { useState } from 'react';
 import {
   View,
@@ -9,12 +11,13 @@ import {
   TouchableOpacity,
   Keyboard,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthInput from '../components/input';
 import AuthButton from '../components/button';
 import StatusModal from '../components/StatusModal';
+import { authAPI } from '../services/api';
 
 const Signin = () => {
   const router = useRouter();
@@ -22,12 +25,22 @@ const Signin = () => {
   const [password, setPassword] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState('error');
+  const [modalMessage, setModalMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async () => {
     Keyboard.dismiss();
-    
+
+    // Validation
     if (!email || !password) {
+      setModalMessage('Please fill in all fields');
+      setModalType('error');
+      setModalVisible(true);
+      return;
+    }
+
+    if (!email.includes('@')) {
+      setModalMessage('Please enter a valid email address');
       setModalType('error');
       setModalVisible(true);
       return;
@@ -36,20 +49,26 @@ const Signin = () => {
     setIsLoading(true);
 
     try {
-      // Your authentication logic here
-      // const response = await api.post('/auth/login', { email, password });
+      console.log('Attempting login with:', email);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call real API
+      const result = await authAPI.login(email, password);
 
-      // On successful login, save the login state
-      await AsyncStorage.setItem('hasLoggedIn', 'true');
-      await AsyncStorage.setItem('userToken', 'your-auth-token');
-      
-      // Navigate to main app
-      router.replace('/(tabs)');
+      console.log('Login result:', result);
+
+      if (result.success) {
+        // Success! Navigate to main app
+        console.log('Login successful, navigating to tabs');
+        router.replace('/(tabs)');
+      } else {
+        // Show error
+        setModalMessage(result.error || 'Login failed. Please check your credentials.');
+        setModalType('error');
+        setModalVisible(true);
+      }
     } catch (error) {
       console.error('Login error:', error);
+      setModalMessage('An unexpected error occurred. Please try again.');
       setModalType('error');
       setModalVisible(true);
     } finally {
@@ -58,16 +77,18 @@ const Signin = () => {
   };
 
   const handleGoogleSignIn = () => {
-    // Implement Google Sign-In
-    console.log('Google Sign-In pressed');
+    // TODO: Implement Google Sign-In
+    setModalMessage('Google Sign-In coming soon!');
+    setModalType('error');
+    setModalVisible(true);
   };
 
   const handleForgotPassword = () => {
-    router.push('/auth/ForgotPassword');
+    router.push('/(auth)/forgot-password');
   };
 
   const handleSignUp = () => {
-    router.push('/auth/Signup');
+    router.push('/(auth)/signup');
   };
 
   const closeModal = () => {
@@ -108,6 +129,7 @@ const Signin = () => {
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={!isLoading}
                 />
               </View>
 
@@ -118,21 +140,32 @@ const Signin = () => {
                   secureTextEntry={true}
                   value={password}
                   onChangeText={setPassword}
+                  editable={!isLoading}
                 />
               </View>
 
               <TouchableOpacity
                 style={styles.forgotPasswordButton}
                 onPress={handleForgotPassword}
+                disabled={isLoading}
               >
                 <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
               </TouchableOpacity>
 
-              <AuthButton
-                title={isLoading ? 'Signing in...' : 'Sign In'}
-                onPress={handleSignIn}
-                type="primary"
-              />
+              <View style={styles.buttonContainer}>
+                <AuthButton
+                  title={isLoading ? 'Signing in...' : 'Sign In'}
+                  onPress={handleSignIn}
+                  type="primary"
+                />
+                {isLoading && (
+                  <ActivityIndicator
+                    size="small"
+                    color="#fff"
+                    style={styles.loadingIndicator}
+                  />
+                )}
+              </View>
 
               <View style={styles.divider}>
                 <View style={styles.dividerLine} />
@@ -150,7 +183,7 @@ const Signin = () => {
             {/* Footer */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={handleSignUp}>
+              <TouchableOpacity onPress={handleSignUp} disabled={isLoading}>
                 <Text style={styles.signUpText}>Sign Up</Text>
               </TouchableOpacity>
             </View>
@@ -161,6 +194,7 @@ const Signin = () => {
       <StatusModal
         visible={modalVisible}
         type={modalType}
+        message={modalMessage}
         onClose={closeModal}
         onRetry={retryLogin}
       />
@@ -219,6 +253,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     fontFamily: 'GoogleSans-Medium',
+  },
+  buttonContainer: {
+    position: 'relative',
+  },
+  loadingIndicator: {
+    position: 'absolute',
+    right: 20,
+    top: 15,
   },
   divider: {
     flexDirection: 'row',
