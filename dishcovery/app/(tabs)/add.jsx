@@ -15,7 +15,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { recipeAPI } from '../services/api';
-import { handleNetworkError } from '../utils/network';
 
 export default function Add() {
   const router = useRouter();
