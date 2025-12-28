@@ -160,7 +160,7 @@ export default function Onboarding() {
       styles.container, 
       currentIndex === 0 && styles.welcomeContainer
     ]}>
-      {/* Skip button - only show after welcome screen */}
+      {/* Skip button - only show on onboarding slides (not welcome) */}
       {currentIndex > 0 && (
         <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
           <Text style={styles.skipText}>Skip</Text>
@@ -180,23 +180,25 @@ export default function Onboarding() {
         keyExtractor={(item) => item.id}
       />
 
-      <View style={styles.footer}>
-        <View style={styles.dotsContainer}>
-          {slides.map((_, index) => (
-            <View
-              key={index}
-              style={[styles.dot, currentIndex === index && styles.activeDot]}
-            />
-          ))}
-        </View>
+      {/* Footer - only show on onboarding slides (not welcome) */}
+      {currentIndex > 0 && (
+        <View style={styles.footer}>
+          <View style={styles.dotsContainer}>
+            {slides.slice(1).map((_, index) => (
+              <View
+                key={index}
+                style={[styles.dot, (currentIndex - 1) === index && styles.activeDot]}
+              />
+            ))}
+          </View>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.nextText}>
-            {currentIndex === slides.length - 1 ? "Get Started" : 
-             currentIndex === 0 ? "Let's Go" : "Next →"}
-          </Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+            <Text style={styles.nextText}>
+              {currentIndex === slides.length - 1 ? "Get Started" : "Next →"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -220,18 +222,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 40,
+    marginTop: 50,
   },
   welcomeLogo: {
     height: 150,
     width: 150,
-    marginBottom: 32,
+    marginBottom: 23,
+    marginTop: 24,
     resizeMode: "contain",
   },
   welcomeTitle: {
     fontSize: 32,
     fontWeight: "700",
     color: "#1a1a1a",
-    marginBottom: 16,
+    marginBottom: 30,
     textAlign: "center",
     fontFamily: 'GoogleSans-Bold',
   },
@@ -247,6 +251,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF4C4C",
     paddingVertical: 16,
     paddingHorizontal: 80,
+    marginTop: 200,
     borderRadius: 12,
     shadowColor: "#FF4C4C",
     shadowOffset: { width: 0, height: 4 },
