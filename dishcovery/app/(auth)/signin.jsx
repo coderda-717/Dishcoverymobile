@@ -1,4 +1,4 @@
-// app/(auth)/signin.jsx
+// dishcovery/app/(auth)/signin.jsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from "expo-router";
@@ -57,28 +57,31 @@ const SignInScreen = () => {
     setLoading(true);
 
     try {
-      console.log('Attempting login with:', form.email.trim());
+      // ✅ FIXED: Send data exactly as backend expects
+      const loginData = {
+        email: form.email.trim().toLowerCase(),
+        password: form.password
+      };
+
+      console.log('🚀 Sending login request for:', loginData.email);
       
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: form.email.trim(),
-          password: form.password,
-        }),
+        body: JSON.stringify(loginData),
       });
 
       const data = await response.json();
-      console.log('Login response:', response.status, data);
+      console.log('📥 Login response:', response.status, data);
 
-      if (response.ok && data.token) {
+      if (response.ok && data.token && data.user) {
+        console.log('✅ Login successful');
+
         // Save user data
         await AsyncStorage.setItem('userToken', data.token);
         await AsyncStorage.setItem('userData', JSON.stringify(data.user));
-        
-        console.log('Login successful, navigating to main app');
         
         // Clear form
         setForm({ email: "", password: "" });
@@ -88,13 +91,13 @@ const SignInScreen = () => {
       } else {
         // Handle error response
         const message = data.error || data.message || 'Invalid email or password';
-        console.error('Login failed:', message);
+        console.error('❌ Login failed:', message);
         setErrorMessage(message);
         setModalType('error');
         setModalVisible(true);
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Network error:', error);
       setErrorMessage('Network error. Please check your connection and try again.');
       setModalType('error');
       setModalVisible(true);

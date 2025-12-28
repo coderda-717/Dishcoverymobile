@@ -2,7 +2,7 @@
 // ✅ FIXED VERSION - Properly integrated with backend
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'https://dishcovery-backend-1.onrender.com/api';
+const API_BASE_URL = 'https://dishcovery-backend-ln31.onrender.com/api';
 const API_TIMEOUT = 30000; // 30 seconds
 
 // Helper: Get auth token

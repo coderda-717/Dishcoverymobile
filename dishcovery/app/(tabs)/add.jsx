@@ -1,3 +1,4 @@
+// app/(tabs)/add.jsx - Updated with backend integration
 import React, { useState } from 'react';
 import { 
   View, 
@@ -7,14 +8,18 @@ import {
   Image, 
   ScrollView,
   StyleSheet, 
-  Alert 
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { recipeAPI } from '../services/api';
+import { handleNetworkError } from '../utils/network';
 
 export default function Add() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     photo: null,
     title: '',
@@ -58,19 +63,145 @@ export default function Add() {
     }
   };
 
-  const handleNext = () => {
-    if (!formData.title || !formData.category || !formData.ingredients || !formData.steps) {
-      Alert.alert('Required Fields', 'Please fill all required fields marked with *');
+  // Convert time string to minutes
+  const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr) return 30;
+    
+    const parts = timeStr.toLowerCase().split(' ');
+    let minutes = 0;
+    
+    for (let i = 0; i < parts.length; i += 2) {
+      const value = parseInt(parts[i]);
+      const unit = parts[i + 1];
+      
+      if (unit.includes('hr')) {
+        minutes += value * 60;
+      } else if (unit.includes('min')) {
+        minutes += value;
+      }
+    }
+    
+    return minutes || 30;
+  };
+
+  const handleNext = async () => {
+    // Validation
+    if (!formData.title.trim()) {
+      Alert.alert('Missing Field', 'Please enter a recipe title');
       return;
     }
-    Alert.alert('Success', 'Recipe added successfully!');
+    
+    if (!formData.category) {
+      Alert.alert('Missing Field', 'Please select a category');
+      return;
+    }
+    
+    if (!formData.ingredients.trim()) {
+      Alert.alert('Missing Field', 'Please enter ingredients');
+      return;
+    }
+    
+    if (!formData.steps.trim()) {
+      Alert.alert('Missing Field', 'Please enter cooking steps');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Prepare recipe data
+      const recipeData = {
+        name: formData.title.trim(),
+        category: formData.category,
+        description: formData.cuisine.trim() || `Delicious ${formData.title}`,
+        ingredients: formData.ingredients
+          .split(',')
+          .map(i => i.trim())
+          .filter(i => i.length > 0),
+        instructions: formData.steps
+          .split('\n')
+          .map(s => s.trim())
+          .filter(s => s.length > 0),
+        cookingTime: parseTimeToMinutes(formData.cookingTime),
+        prepTime: 10,
+        rating: 0,
+        image: formData.photo,
+      };
+
+      console.log('Creating recipe:', recipeData.name);
+
+      // Call API to create recipe
+      const result = await recipeAPI.createRecipe(recipeData);
+
+      if (result.success) {
+        Alert.alert(
+          'Success! 🎉',
+          'Your recipe has been added successfully!',
+          [
+            {
+              text: 'View Recipe',
+              onPress: () => {
+                // Reset form
+                setFormData({
+                  photo: null,
+                  title: '',
+                  cuisine: '',
+                  category: '',
+                  ingredients: '',
+                  steps: '',
+                  allergies: '',
+                  cookingTime: '',
+                });
+                
+                // Navigate to home to see the new recipe
+                router.push('/(tabs)');
+              }
+            }
+          ]
+        );
+      } else {
+        // Handle specific error cases
+        const errorMessage = result.error || 'Failed to add recipe';
+        
+        if (errorMessage.includes('authentication') || errorMessage.includes('token')) {
+          Alert.alert(
+            'Authentication Required',
+            'Please log in again to add recipes',
+            [
+              {
+                text: 'Log In',
+                onPress: () => router.push('/(auth)/signin')
+              },
+              { text: 'Cancel', style: 'cancel' }
+            ]
+          );
+        } else {
+          Alert.alert('Error', errorMessage);
+        }
+      }
+    } catch (error) {
+      console.error('Recipe creation error:', error);
+      
+      // Use network error handler
+      const handled = handleNetworkError(error);
+      
+      if (!handled) {
+        Alert.alert(
+          'Error',
+          'Failed to add recipe. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.header}>Add Recipe</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} disabled={loading}>
           <Image 
             source={require('../../assets/icons/arrow-right.png')} 
             style={styles.backArrow}
@@ -85,7 +216,11 @@ export default function Add() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.formContent}
       >
-        <TouchableOpacity style={styles.photoUpload} onPress={pickImage}>
+        <TouchableOpacity 
+          style={styles.photoUpload} 
+          onPress={pickImage}
+          disabled={loading}
+        >
           {formData.photo ? (
             <Image source={{ uri: formData.photo }} style={styles.uploadedImage} />
           ) : (
@@ -106,6 +241,7 @@ export default function Add() {
           placeholderTextColor="#999"
           value={formData.title}
           onChangeText={(text) => setFormData({ ...formData, title: text })}
+          editable={!loading}
         />
 
         <Text style={styles.label}>Cuisine</Text>
@@ -115,12 +251,14 @@ export default function Add() {
           placeholderTextColor="#999"
           value={formData.cuisine}
           onChangeText={(text) => setFormData({ ...formData, cuisine: text })}
+          editable={!loading}
         />
 
         <Text style={styles.label}>Category*</Text>
         <TouchableOpacity
           style={styles.dropdown}
           onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+          disabled={loading}
         >
           <Text style={[styles.dropdownText, !formData.category && styles.placeholder]}>
             {formData.category || 'Select category...'}
@@ -158,38 +296,42 @@ export default function Add() {
         <Text style={styles.label}>Ingredients*</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="List each ingredient (seperate with comma)..."
+          placeholder="List each ingredient (separate with comma)..."
           placeholderTextColor="#999"
           value={formData.ingredients}
           onChangeText={(text) => setFormData({ ...formData, ingredients: text })}
           multiline
           numberOfLines={4}
+          editable={!loading}
         />
 
         <Text style={styles.label}>Steps*</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="List each step taken to prepare this meal"
+          placeholder="List each step taken to prepare this meal (one per line)..."
           placeholderTextColor="#999"
           value={formData.steps}
           onChangeText={(text) => setFormData({ ...formData, steps: text })}
           multiline
           numberOfLines={4}
+          editable={!loading}
         />
 
         <Text style={styles.label}>Allergy Warnings</Text>
         <TextInput
           style={styles.input}
-          placeholder="e.g. Dairy, nuts, gluten (seperate with comma)..."
+          placeholder="e.g. Dairy, nuts, gluten (separate with comma)..."
           placeholderTextColor="#999"
           value={formData.allergies}
           onChangeText={(text) => setFormData({ ...formData, allergies: text })}
+          editable={!loading}
         />
 
         <Text style={styles.label}>Cooking Time</Text>
         <TouchableOpacity
           style={styles.dropdown}
           onPress={() => setShowTimeDropdown(!showTimeDropdown)}
+          disabled={loading}
         >
           <Text style={[styles.dropdownText, !formData.cookingTime && styles.placeholder]}>
             {formData.cookingTime || 'Select time'}
@@ -226,8 +368,21 @@ export default function Add() {
           </View>
         )}
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.nextButtonText}>Next</Text>
+        <TouchableOpacity 
+          style={[styles.nextButton, loading && styles.nextButtonDisabled]} 
+          onPress={handleNext}
+          disabled={loading}
+        >
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#fff" />
+              <Text style={[styles.nextButtonText, { marginLeft: 8 }]}>
+                Creating Recipe...
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.nextButtonText}>Create Recipe</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -246,8 +401,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
-  
-   header: {
+  header: {
     fontSize: 24,
     fontWeight: 'bold',
     fontFamily: 'GoogleSans-Bold',
@@ -333,8 +487,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-  
-  
   textArea: {
     height: 100,
     textAlignVertical: 'top',
@@ -350,7 +502,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#fff',
   },
- 
   placeholder: {
     color: '#999',
   },
@@ -381,8 +532,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  
- 
   nextButton: {
     backgroundColor: '#ff4458',
     borderRadius: 8,
@@ -391,5 +540,12 @@ const styles = StyleSheet.create({
     marginTop: 32,
     marginBottom: 20,
   },
- 
+  nextButtonDisabled: {
+    opacity: 0.6,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

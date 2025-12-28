@@ -1,4 +1,4 @@
-// app/(auth)/signup.jsx
+// dishcovery/app/(auth)/signup.jsx
 import React, { useState } from "react";
 import {
   Text,
@@ -102,40 +102,65 @@ const SignUpScreen = () => {
     setLoading(true);
 
     try {
-      console.log('Starting signup process with:', form.email.trim());
-      
+      // ✅ FIXED: Send data exactly as backend expects
+      const signupData = {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim().toLowerCase(),
+        password: form.password
+      };
+
+      console.log('🚀 Sending signup request:', { 
+        ...signupData, 
+        password: '***hidden***' 
+      });
+
       const response = await fetch(`${API_BASE_URL}/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          firstName: form.firstName.trim(),
-          lastName: form.lastName.trim(),
-          email: form.email.trim(),
-          password: form.password,
-        }),
+        body: JSON.stringify(signupData),
       });
 
       const data = await response.json();
-      console.log('Signup response:', response.status, data);
+      console.log('📥 Signup response:', response.status, data);
 
-      if (response.ok && data.token) {
-        console.log('Signup successful');
+      if (response.ok && data.token && data.user) {
+        console.log('✅ Signup successful');
+
+        // Save token and user data
+        await AsyncStorage.setItem('userToken', data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
         
         // Show success message
         setModalType('success');
-        setErrorMessage('Account created successfully! Please sign in.');
+        setErrorMessage('Account created successfully! Redirecting to login...');
         setModalVisible(true);
+
+        // Clear form
+        setForm({
+          firstName: "",
+          lastName: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+        });
+
+        // Auto-redirect after 2 seconds
+        setTimeout(() => {
+          setModalVisible(false);
+          router.replace("/(auth)/signin");
+        }, 2000);
       } else {
         const message = data.error || data.message || 'Signup failed';
-        console.error('Signup failed:', message);
+        console.error('❌ Signup failed:', message);
         setErrorMessage(message);
         setModalType('error');
         setModalVisible(true);
       }
     } catch (error) {
-      console.error('Sign up error:', error);
+      console.error('❌ Network error:', error);
       setErrorMessage('Network error. Please check your connection and try again.');
       setModalType('error');
       setModalVisible(true);
@@ -146,15 +171,6 @@ const SignUpScreen = () => {
 
   const handleSuccessModalClose = () => {
     setModalVisible(false);
-    // Clear form
-    setForm({
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
-    // Navigate to signin
     router.replace("/(auth)/signin");
   };
 

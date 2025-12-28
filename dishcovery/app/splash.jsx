@@ -38,6 +38,8 @@ export default function SplashScreen() {
       router.replace("/(auth)/onboarding");
     }
   };
+
+  
   
   return (
     <SafeAreaView style={{ backgroundColor: "#ffffff", flex: 1 }}>
