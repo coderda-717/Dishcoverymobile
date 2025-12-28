@@ -1,3 +1,4 @@
+// app/(auth)/_layout.jsx
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
@@ -25,6 +26,12 @@ export default function AuthLayout() {
         animation: 'slide_from_right',
       }}>
       <Stack.Screen 
+        name="welcome" 
+        options={{
+          gestureEnabled: false,
+        }} 
+      />
+      <Stack.Screen 
         name="onboarding" 
         options={{
           gestureEnabled: false,
@@ -36,6 +43,10 @@ export default function AuthLayout() {
       />
       <Stack.Screen 
         name="signup" 
+        options={{}} 
+      />
+      <Stack.Screen 
+        name="forgot-password" 
         options={{}} 
       />
     </Stack>
@@ -50,4 +61,3 @@ const styles = StyleSheet.create({
     backgroundColor: '#C85A3F',
   },
 });
-

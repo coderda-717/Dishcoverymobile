@@ -1,5 +1,6 @@
+// app/(auth)/signin.jsx
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthInput from '../components/input';
@@ -9,11 +10,6 @@ import AuthStyles from '../(auth)/AuthStyle';
 import StatusModal from '../components/StatusModal';
 
 const API_BASE_URL = 'https://dishcovery-backend-1.onrender.com/api';
-
-// Helper to extract error message from response
-const getErrorMessage = (data) => {
-  return data?.error || data?.message || 'An error occurred. Please try again.';
-};
 
 const SignInScreen = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -118,20 +114,28 @@ const SignInScreen = () => {
 
   return (
     <DishSafeAreaView>
-      <ScrollView contentContainerStyle={AuthStyles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={{ flex: 1 }}>
-          <Image source={require("../../assets/images/image2.png")} style={AuthStyles.image2} />
-        </View>
-        
-        <View style={{ flex: 2, marginTop: 150 }}>
-          <View style={AuthStyles.headerContainer}>
-            <Image source={require("../../assets/images/icon.png")} style={AuthStyles.logo} />
-            <Text style={AuthStyles.title}>Welcome Back!</Text>
-            <Text style={AuthStyles.subtitle}>Please log in</Text>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <ScrollView 
+          contentContainerStyle={AuthStyles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={{ flex: 1 }}>
+            <Image source={require("../../assets/images/image2.png")} style={AuthStyles.image2} />
           </View>
+          
+          <View style={{ flex: 2, marginTop: 150 }}>
+            <View style={AuthStyles.headerContainer}>
+              <Image source={require("../../assets/images/icon.png")} style={AuthStyles.logo} />
+              <Text style={AuthStyles.title}>Welcome Back!</Text>
+              <Text style={AuthStyles.subtitle}>Please log in</Text>
+            </View>
 
-          <View style={AuthStyles.formContainer}>
-            <ScrollView>
+            <View style={AuthStyles.formContainer}>
               <Text style={AuthStyles.label}>Email</Text>
               <AuthInput 
                 placeholder="Email" 
@@ -156,56 +160,56 @@ const SignInScreen = () => {
               {errors.password ? (
                 <Text style={styles.errorText}>{errors.password}</Text>
               ) : null}
-            </ScrollView>
-          </View>
+            </View>
 
-          <TouchableOpacity 
-            onPress={() => router.push("/(auth)/forgot-password")}
-            disabled={loading}
-          >
-            <Text style={AuthStyles.forgotLink}>Forgot Password?</Text>
-          </TouchableOpacity>
-
-          <View style={AuthStyles.buttonContainer}>
-            <AuthButton 
-              title={loading ? "Logging in..." : "Log In"} 
-              onPress={handleLogin}
+            <TouchableOpacity 
+              onPress={() => router.push("/(auth)/forgot-password")}
               disabled={loading}
-            />
-            {loading && (
-              <ActivityIndicator 
-                size="small" 
-                color="#FF6B35" 
-                style={styles.loader}
+            >
+              <Text style={AuthStyles.forgotLink}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <View style={AuthStyles.buttonContainer}>
+              <AuthButton 
+                title={loading ? "Logging in..." : "Log In"} 
+                onPress={handleLogin}
+                disabled={loading}
               />
-            )}
-            
-            <AuthButton 
-              title="Continue with Google" 
-              type="google" 
-              onPress={() => {
-                // Google sign-in coming soon
-              }}
+              {loading && (
+                <ActivityIndicator 
+                  size="small" 
+                  color="#FF6B35" 
+                  style={styles.loader}
+                />
+              )}
+              
+              <AuthButton 
+                title="Continue with Google" 
+                type="google" 
+                onPress={() => {
+                  // Google sign-in coming soon
+                }}
+                disabled={loading}
+              />
+            </View>
+
+            <TouchableOpacity 
+              onPress={() => router.push("/(auth)/signup")}
               disabled={loading}
-            />
+            >
+              <Text style={AuthStyles.link}>Don't have an account? Sign Up</Text>
+            </TouchableOpacity>
           </View>
+        </ScrollView>
 
-          <TouchableOpacity 
-            onPress={() => router.push("/(auth)/signup")}
-            disabled={loading}
-          >
-            <Text style={AuthStyles.link}>Don't have an account? Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
-      <StatusModal
-        visible={modalVisible}
-        type={modalType}
-        message={errorMessage}
-        onClose={handleCloseModal}
-        onRetry={handleRetry}
-      />
+        <StatusModal
+          visible={modalVisible}
+          type={modalType}
+          message={errorMessage}
+          onClose={handleCloseModal}
+          onRetry={handleRetry}
+        />
+      </KeyboardAvoidingView>
     </DishSafeAreaView>
   );
 };

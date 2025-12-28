@@ -1,3 +1,4 @@
+// app/(auth)/onboarding.jsx
 import React, { useState, useRef } from "react";
 import {
   View,
@@ -15,6 +16,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const { width } = Dimensions.get("window");
 
 const slides = [
+  {
+    id: "0",
+    type: "welcome",
+    title: "Dishcovery",
+    description: "Discover flavors that bring people together",
+  },
   {
     id: "1",
     title: "Discover Flavors That Bring People Together",
@@ -66,22 +73,13 @@ export default function Onboarding() {
 
   const completeOnboarding = async () => {
     try {
-      // Check if user is already authenticated
-      const token = await AsyncStorage.getItem('userToken');
-      const userData = await AsyncStorage.getItem('userData');
+      // Mark onboarding as completed
+      await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
       
-      if (token && userData) {
-        // User is authenticated, go to main app
-        console.log('User authenticated, navigating to main app');
-        router.replace("/(tabs)");
-      } else {
-        // User not authenticated, go to sign in
-        console.log('User not authenticated, navigating to signin');
-        router.replace("/(auth)/signin");
-      }
+      // Always go to signin after onboarding
+      router.replace("/(auth)/signin");
     } catch (error) {
       console.error('Onboarding completion error:', error);
-      // On error, default to sign in
       router.replace("/(auth)/signin");
     }
   };
@@ -103,42 +101,77 @@ export default function Onboarding() {
     setCurrentIndex(index);
   };
 
+  const renderWelcomeSlide = () => (
+    <View style={[styles.welcomeSlide, { width }]}>
+      <View style={styles.welcomeContent}>
+        <Image
+          style={styles.welcomeLogo}
+          source={require("../../assets/images/icon.png")}
+        />
+
+        <Text style={styles.welcomeTitle}>Dishcovery</Text>
+
+        <Text style={styles.welcomeSubtitle}>
+          Discover flavors that bring people together
+        </Text>
+
+        <TouchableOpacity 
+          style={styles.letsGoButton} 
+          onPress={handleNext}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.letsGoText}>Let's Go</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderOnboardingSlide = (item) => (
+    <View style={[styles.slide, { width }]}>
+      <View style={styles.illustration}>
+        <View style={styles.starGroup}>
+          <Image
+            source={require("../../assets/images/Group2.png")}
+            style={styles.starGroupImage}
+          />
+        </View>
+
+        <View style={styles.circle}>
+          <Image source={item.source} style={item.style} />
+        </View>
+
+        <View style={styles.starGroup}>
+          <Image
+            source={require("../../assets/images/Group1.png")}
+            style={styles.starGroupImage}
+          />
+        </View>
+      </View>
+
+      <View style={styles.textBox}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.desc}>{item.description}</Text>
+      </View>
+    </View>
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-        <Text style={styles.skipText}>Skip</Text>
-      </TouchableOpacity>
+    <SafeAreaView style={[
+      styles.container, 
+      currentIndex === 0 && styles.welcomeContainer
+    ]}>
+      {/* Skip button - only show after welcome screen */}
+      {currentIndex > 0 && (
+        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
+      )}
 
       <FlatList
         data={slides}
-        renderItem={({ item }) => (
-          <View style={[styles.slide, { width }]}>
-            <View style={styles.illustration}>
-              <View style={styles.starGroup}>
-                <Image
-                  source={require("../../assets/images/Group2.png")}
-                  style={styles.starGroupImage}
-                />
-              </View>
-
-              <View style={styles.circle}>
-                <Image source={item.source} style={item.style} />
-              </View>
-
-              <View style={styles.starGroup}>
-                <Image
-                  source={require("../../assets/images/Group1.png")}
-                  style={styles.starGroupImage}
-                />
-              </View>
-            </View>
-
-            <View style={styles.textBox}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.desc}>{item.description}</Text>
-            </View>
-          </View>
-        )}
+        renderItem={({ item }) => 
+          item.type === "welcome" ? renderWelcomeSlide() : renderOnboardingSlide(item)
+        }
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -159,7 +192,8 @@ export default function Onboarding() {
 
         <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
           <Text style={styles.nextText}>
-            {currentIndex === slides.length - 1 ? "Get Started" : "Next →"}
+            {currentIndex === slides.length - 1 ? "Get Started" : 
+             currentIndex === 0 ? "Let's Go" : "Next →"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -173,6 +207,58 @@ const styles = StyleSheet.create({
     backgroundColor: "#A6370E",
     alignItems: "center",
     justifyContent: "center",
+  },
+  welcomeContainer: {
+    backgroundColor: "#ffffff",
+  },
+  welcomeSlide: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+  },
+  welcomeContent: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 40,
+  },
+  welcomeLogo: {
+    height: 150,
+    width: 150,
+    marginBottom: 32,
+    resizeMode: "contain",
+  },
+  welcomeTitle: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: 16,
+    textAlign: "center",
+    fontFamily: 'GoogleSans-Bold',
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 60,
+    textAlign: "center",
+    lineHeight: 24,
+    fontFamily: 'GoogleSans-Regular',
+  },
+  letsGoButton: {
+    backgroundColor: "#FF4C4C",
+    paddingVertical: 16,
+    paddingHorizontal: 80,
+    borderRadius: 12,
+    shadowColor: "#FF4C4C",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  letsGoText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "700",
+    fontFamily: 'GoogleSans-Bold',
   },
   slide: {
     flex: 1,

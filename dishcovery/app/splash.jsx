@@ -1,7 +1,9 @@
+// app/splash.jsx
 import React, { useEffect } from 'react';
 import { View, Image, Text, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -12,15 +14,27 @@ export default function SplashScreen() {
 
   const initializeApp = async () => {
     try {
-      // Show splash for 2 seconds for branding
+      // Show splash for 2 seconds
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // ALWAYS go to onboarding (for all users, every launch)
-      router.replace("/(auth)/onboarding");
+      // Check if user has completed onboarding and is authenticated
+      const hasCompletedOnboarding = await AsyncStorage.getItem('hasCompletedOnboarding');
+      const token = await AsyncStorage.getItem('userToken');
+      
+      if (token) {
+        // User is authenticated, go to main app
+        router.replace("/(tabs)");
+      } else if (hasCompletedOnboarding) {
+        // User has seen onboarding but not logged in, go to signin
+        router.replace("/(auth)/signin");
+      } else {
+        // First time user, show onboarding (which includes welcome as first slide)
+        router.replace("/(auth)/onboarding");
+      }
       
     } catch (error) {
       console.error('Splash screen error:', error);
-      // On error, still show onboarding
+      // On error, show onboarding
       router.replace("/(auth)/onboarding");
     }
   };
