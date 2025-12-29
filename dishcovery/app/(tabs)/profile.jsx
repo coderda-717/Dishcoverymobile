@@ -125,7 +125,7 @@ export default function Profile() {
 
           <TouchableOpacity 
             style={styles.editButton}
-            onPress={() => handleProtectedAction('/profile/editprofile')}
+            onPress={() => handleProtectedAction('/profile/edit-profile')}
           >
             <Text style={styles.editButtonText}>Edit Profile</Text>
             <Ionicons name="create-outline" size={18} color="#fff" />
@@ -154,7 +154,7 @@ export default function Profile() {
           
           <TouchableOpacity 
             style={styles.menuItem}
-            onPress={() => handleProtectedAction('/profile/mydishes')}
+            onPress={() => handleProtectedAction('/profile/my-dishes')}
           >
             <Text style={styles.menuText}>My Dishes</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" />
@@ -183,7 +183,7 @@ export default function Profile() {
           
           <TouchableOpacity 
             style={styles.menuItem}
-            onPress={() => router.push('/profile/privacypolicy')}
+            onPress={() => router.push('/profile/privacy-policy')}
           >
             <Text style={styles.menuText}>Privacy & Policy</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" />
@@ -191,7 +191,7 @@ export default function Profile() {
 
           <TouchableOpacity 
             style={styles.menuItem}
-            onPress={() => router.push('/profile/termsandconditions')}
+            onPress={() => router.push('/profile/terms-conditions')}
           >
             <Text style={styles.menuText}>Terms and Condition</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" />
@@ -199,7 +199,7 @@ export default function Profile() {
 
           <TouchableOpacity 
             style={styles.menuItem}
-            onPress={() => router.push('/profile/faqhelp')}
+            onPress={() => router.push('/profile/faq-help')}
           >
             <Text style={styles.menuText}>FAQ & Help</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" />
