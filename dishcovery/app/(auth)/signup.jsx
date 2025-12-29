@@ -1,4 +1,5 @@
 // dishcovery/app/(auth)/signup.jsx
+// ✅ CORRECTED - Properly sends firstName and lastName
 import React, { useState } from "react";
 import {
   Text,
@@ -11,14 +12,12 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authAPI } from '../services/api';
 import AuthInput from "../components/input";
 import AuthButton from "../components/button";
 import DishSafeAreaView from "../components/DishSafearea";
 import AuthStyles from '../(auth)/AuthStyle';
 import StatusModal from '../components/StatusModal';
-
-const API_BASE_URL = 'https://dishcovery-backend-1.onrender.com/api';
 
 const SignUpScreen = () => {
   const [form, setForm] = useState({
@@ -102,7 +101,7 @@ const SignUpScreen = () => {
     setLoading(true);
 
     try {
-      // ✅ FIXED: Send data exactly as backend expects
+      // ✅ Send data with correct field names
       const signupData = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
@@ -110,32 +109,16 @@ const SignUpScreen = () => {
         password: form.password
       };
 
-      console.log('🚀 Sending signup request:', { 
-        ...signupData, 
-        password: '***hidden***' 
-      });
+      console.log('🚀 Signing up:', { ...signupData, password: '***' });
 
-      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(signupData),
-      });
+      const result = await authAPI.signup(signupData);
 
-      const data = await response.json();
-      console.log('📥 Signup response:', response.status, data);
-
-      if (response.ok && data.token && data.user) {
+      if (result.success) {
         console.log('✅ Signup successful');
 
-        // Save token and user data
-        await AsyncStorage.setItem('userToken', data.token);
-        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
-        
         // Show success message
         setModalType('success');
-        setErrorMessage('Account created successfully! Redirecting to login...');
+        setErrorMessage('Account created successfully! Redirecting...');
         setModalVisible(true);
 
         // Clear form
@@ -150,10 +133,10 @@ const SignUpScreen = () => {
         // Auto-redirect after 2 seconds
         setTimeout(() => {
           setModalVisible(false);
-          router.replace("/(auth)/signin");
+          router.replace("/(tabs)");
         }, 2000);
       } else {
-        const message = data.error || data.message || 'Signup failed';
+        const message = result.error || 'Signup failed. Please try again.';
         console.error('❌ Signup failed:', message);
         setErrorMessage(message);
         setModalType('error');
@@ -161,7 +144,7 @@ const SignUpScreen = () => {
       }
     } catch (error) {
       console.error('❌ Network error:', error);
-      setErrorMessage('Network error. Please check your connection and try again.');
+      setErrorMessage('Network error. Please check your connection.');
       setModalType('error');
       setModalVisible(true);
     } finally {
@@ -171,7 +154,7 @@ const SignUpScreen = () => {
 
   const handleSuccessModalClose = () => {
     setModalVisible(false);
-    router.replace("/(auth)/signin");
+    router.replace("/(tabs)");
   };
 
   const handleRetry = () => {

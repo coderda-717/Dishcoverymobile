@@ -65,14 +65,16 @@ const SignInScreen = () => {
 
       console.log('🚀 Sending login request for:', loginData.email);
       
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginData),
-      });
+      const result = await authAPI.login(form.email, form.password);
 
+if (result.success) {
+  setForm({ email: "", password: "" });
+  router.replace("/(tabs)");
+} else {
+  setErrorMessage(result.error || 'Invalid email or password');
+  setModalType('error');
+  setModalVisible(true);
+}
       const data = await response.json();
       console.log('📥 Login response:', response.status, data);
 

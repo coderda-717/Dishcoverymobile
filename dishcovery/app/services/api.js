@@ -1,7 +1,8 @@
 // dishcovery/app/services/api.js
-// ✅ FIXED VERSION - Properly integrated with backend
+// ✅ CORRECTED VERSION - Matches backend URL and structure
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// ✅ CORRECT Backend URL
 const API_BASE_URL = 'https://dishcovery-backend-ln31.onrender.com/api';
 const API_TIMEOUT = 30000; // 30 seconds
 
@@ -54,17 +55,12 @@ const fetchWithTimeout = async (url, options = {}, timeout = API_TIMEOUT) => {
 // AUTH API
 // ============================================
 export const authAPI = {
-  // ✅ SIGNUP - Fixed to match backend structure
+  // ✅ SIGNUP - Correct field names for backend
   signup: async (userData) => {
     try {
-      const { name, email, password } = userData;
-      
-      // Split name into firstName and lastName
-      const nameParts = name.trim().split(' ');
-      const firstName = nameParts[0];
-      const lastName = nameParts.slice(1).join(' ') || nameParts[0];
+      const { firstName, lastName, email, password } = userData;
 
-      console.log('Signing up with:', { firstName, lastName, email });
+      console.log('🚀 Signing up:', { firstName, lastName, email });
 
       const response = await fetchWithTimeout(`${API_BASE_URL}/auth/signup`, {
         method: 'POST',
@@ -78,7 +74,7 @@ export const authAPI = {
       });
 
       const data = await response.json();
-      console.log('Signup response:', response.ok, data);
+      console.log('📥 Signup response:', response.status, data);
 
       if (response.ok && data.token && data.user) {
         // Save token and user data
@@ -93,7 +89,7 @@ export const authAPI = {
         error: data.error || data.message || 'Signup failed',
       };
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('❌ Signup error:', error);
       if (error.name === 'AbortError') {
         return { success: false, error: 'Request timeout. Please try again.' };
       }
@@ -104,16 +100,22 @@ export const authAPI = {
     }
   },
 
-  // ✅ LOGIN - Working correctly
+  // ✅ LOGIN
   login: async (email, password) => {
     try {
+      console.log('🚀 Logging in:', email);
+
       const response = await fetchWithTimeout(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: await createHeaders(),
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email: email.toLowerCase().trim(), 
+          password 
+        }),
       });
 
       const data = await response.json();
+      console.log('📥 Login response:', response.status, data);
 
       if (response.ok && data.token && data.user) {
         // Save token and user data
@@ -124,14 +126,14 @@ export const authAPI = {
 
       return {
         success: false,
-        error: data.error || data.message || 'Login failed',
+        error: data.error || data.message || 'Invalid credentials',
       };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       if (error.name === 'AbortError') {
         return { success: false, error: 'Request timeout. Please try again.' };
       }
-      return { success: false, error: error.message };
+      return { success: false, error: error.message || 'Network error' };
     }
   },
 
@@ -157,13 +159,47 @@ export const authAPI = {
       return null;
     }
   },
+
+  // ✅ FORGOT PASSWORD
+  forgotPassword: async (email) => {
+    try {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: await createHeaders(),
+        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+      });
+
+      const data = await response.json();
+      return { success: response.ok, data };
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // ✅ RESET PASSWORD
+  resetPassword: async (email, password) => {
+    try {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: await createHeaders(),
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      return { success: response.ok, data };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return { success: false, error: error.message };
+    }
+  },
 };
 
 // ============================================
 // RECIPE API
 // ============================================
 export const recipeAPI = {
-  // ✅ GET ALL RECIPES - With filters
+  // ✅ GET ALL RECIPES
   getAllRecipes: async (filters = {}) => {
     try {
       const queryParams = new URLSearchParams();
@@ -177,19 +213,22 @@ export const recipeAPI = {
 
       const url = `${API_BASE_URL}/recipes${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
       
+      console.log('📥 Fetching recipes from:', url);
+
       const response = await fetchWithTimeout(url, {
         method: 'GET',
         headers: await createHeaders(),
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch recipes: ${response.status}`);
+        throw new Error(`HTTP ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('✅ Recipes fetched:', data.length);
       return Array.isArray(data) ? data : [];
     } catch (error) {
-      console.error('Get all recipes error:', error);
+      console.error('❌ Get recipes error:', error);
       return [];
     }
   },
@@ -210,46 +249,48 @@ export const recipeAPI = {
     }
   },
 
-  // ✅ CREATE RECIPE - Fixed FormData implementation
+  // ✅ CREATE RECIPE - Fixed for Cloudinary backend
   createRecipe: async (recipeData) => {
     try {
       const token = await getAuthToken();
       if (!token) {
-        return { success: false, error: 'No authentication token found' };
+        return { success: false, error: 'Authentication required. Please login.' };
       }
+
+      console.log('🚀 Creating recipe:', recipeData.name);
 
       const formData = new FormData();
 
-      // Add image
-      if (recipeData.image) {
+      // ✅ Add image if exists
+      if (recipeData.image && !recipeData.image.startsWith('http')) {
         const uriParts = recipeData.image.split('.');
         const fileType = uriParts[uriParts.length - 1];
 
         formData.append('image', {
           uri: recipeData.image,
-          name: `photo.${fileType}`,
+          name: `recipe.${fileType}`,
           type: `image/${fileType}`,
         });
       }
 
-      // Add other fields
+      // ✅ Add recipe fields
       formData.append('name', recipeData.name || recipeData.title);
       formData.append('category', recipeData.category || 'Nigerian');
-      formData.append('cookingTime', String(recipeData.cookingTime || '30'));
-      formData.append('prepTime', String(recipeData.prepTime || '10'));
-      formData.append('rating', String(recipeData.rating || '0'));
-      formData.append('description', recipeData.description || '');
+      formData.append('cookingTime', String(recipeData.cookingTime || 30));
+      formData.append('prepTime', String(recipeData.prepTime || 10));
+      formData.append('rating', String(recipeData.rating || 0));
+      formData.append('description', recipeData.description || `Delicious ${recipeData.name}`);
       
-      // Handle ingredients array
+      // ✅ Handle ingredients
       const ingredients = Array.isArray(recipeData.ingredients) 
         ? recipeData.ingredients 
-        : recipeData.ingredients.split(',').map(i => i.trim());
+        : recipeData.ingredients.split(',').map(i => i.trim()).filter(i => i);
       formData.append('ingredients', JSON.stringify(ingredients));
       
-      // Handle instructions array
+      // ✅ Handle instructions
       const instructions = Array.isArray(recipeData.instructions) 
         ? recipeData.instructions 
-        : recipeData.instructions.split('\n').filter(i => i.trim());
+        : recipeData.instructions.split('\n').map(s => s.trim()).filter(s => s);
       formData.append('instructions', JSON.stringify(instructions));
 
       const response = await fetchWithTimeout(`${API_BASE_URL}/recipes`, {
@@ -262,10 +303,12 @@ export const recipeAPI = {
       });
 
       const data = await response.json();
+      console.log('📥 Create recipe response:', response.status, data);
+
       return { success: response.ok, data };
     } catch (error) {
-      console.error('Create recipe error:', error);
-      return { success: false, error: error.message };
+      console.error('❌ Create recipe error:', error);
+      return { success: false, error: error.message || 'Failed to create recipe' };
     }
   },
 
@@ -284,7 +327,7 @@ export const recipeAPI = {
     try {
       const token = await getAuthToken();
       if (!token) {
-        return { success: false, error: 'No authentication token found' };
+        return { success: false, error: 'Authentication required' };
       }
 
       const formData = new FormData();
@@ -296,17 +339,17 @@ export const recipeAPI = {
 
         formData.append('image', {
           uri: recipeData.image,
-          name: `photo.${fileType}`,
+          name: `recipe.${fileType}`,
           type: `image/${fileType}`,
         });
       }
 
-      // Add other fields if provided
+      // Add fields if provided
       if (recipeData.name) formData.append('name', recipeData.name);
       if (recipeData.category) formData.append('category', recipeData.category);
       if (recipeData.cookingTime) formData.append('cookingTime', String(recipeData.cookingTime));
       if (recipeData.prepTime) formData.append('prepTime', String(recipeData.prepTime));
-      if (recipeData.rating) formData.append('rating', String(recipeData.rating));
+      if (recipeData.rating !== undefined) formData.append('rating', String(recipeData.rating));
       if (recipeData.description !== undefined) formData.append('description', recipeData.description);
       
       if (recipeData.ingredients) {
@@ -345,7 +388,7 @@ export const recipeAPI = {
     try {
       const token = await getAuthToken();
       if (!token) {
-        return { success: false, error: 'No authentication token found' };
+        return { success: false, error: 'Authentication required' };
       }
 
       const response = await fetchWithTimeout(`${API_BASE_URL}/recipes/${id}`, {
@@ -373,16 +416,32 @@ export const userAPI = {
     try {
       const token = await getAuthToken();
       if (!token) {
-        return { success: false, error: 'No authentication token found' };
+        return { success: false, error: 'Not authenticated' };
       }
 
-      // For now, just return cached user data
-      // Backend doesn't have /auth/me endpoint yet
-      const userData = await authAPI.getCurrentUser();
-      return { success: true, data: userData };
+      const response = await fetchWithTimeout(`${API_BASE_URL}/users/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Update cached user data
+        await AsyncStorage.setItem('userData', JSON.stringify(data));
+        return { success: true, data };
+      }
+
+      return { success: false, error: data.error || 'Failed to fetch profile' };
     } catch (error) {
       console.error('Get profile error:', error);
-      return { success: false, error: error.message };
+      // Return cached data on error
+      const cachedUser = await authAPI.getCurrentUser();
+      return cachedUser 
+        ? { success: true, data: cachedUser }
+        : { success: false, error: error.message };
     }
   },
 
@@ -391,40 +450,52 @@ export const userAPI = {
     try {
       const token = await getAuthToken();
       if (!token) {
-        return { success: false, error: 'No authentication token found' };
+        return { success: false, error: 'Authentication required' };
       }
 
-      // Update local storage for now
-      const currentUser = await authAPI.getCurrentUser();
-      const updatedUser = { ...currentUser, ...profileData };
-      await AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
+      const response = await fetchWithTimeout(`${API_BASE_URL}/users/me`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      });
 
-      return { success: true, data: updatedUser };
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Update cached user data
+        await AsyncStorage.setItem('userData', JSON.stringify(data));
+        return { success: true, data };
+      }
+
+      return { success: false, error: data.error || 'Update failed' };
     } catch (error) {
       console.error('Update profile error:', error);
       return { success: false, error: error.message };
     }
   },
 
-  // ✅ GET USER RECIPES
-  getUserRecipes: async (userId) => {
-    try {
-      // Filter recipes by userId
-      const allRecipes = await recipeAPI.getAllRecipes();
-      const userRecipes = allRecipes.filter(recipe => recipe.userId === userId);
-      return userRecipes;
-    } catch (error) {
-      console.error('Get user recipes error:', error);
-      return [];
-    }
-  },
-
   // ✅ CHANGE PASSWORD
   changePassword: async (oldPassword, newPassword) => {
     try {
-      // Not implemented in backend yet
-      console.warn('Change password not implemented in backend');
-      return { success: false, error: 'Not implemented yet' };
+      const token = await getAuthToken();
+      if (!token) {
+        return { success: false, error: 'Authentication required' };
+      }
+
+      const response = await fetchWithTimeout(`${API_BASE_URL}/users/me/password`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ oldPassword, newPassword }),
+      });
+
+      const data = await response.json();
+      return { success: response.ok, data };
     } catch (error) {
       console.error('Change password error:', error);
       return { success: false, error: error.message };
@@ -436,12 +507,35 @@ export const userAPI = {
 // FAVORITES API
 // ============================================
 export const favoritesAPI = {
+  // ✅ GET USER FAVORITES
+  getUserFavorites: async () => {
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        return { success: false, error: 'Authentication required', data: [] };
+      }
+
+      const response = await fetchWithTimeout(`${API_BASE_URL}/favorites`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      return { success: response.ok, data: Array.isArray(data) ? data : [] };
+    } catch (error) {
+      console.error('Get favorites error:', error);
+      return { success: false, error: error.message, data: [] };
+    }
+  },
+
   // ✅ TOGGLE FAVORITE
   toggleFavorite: async (recipeId) => {
     try {
       const token = await getAuthToken();
       if (!token) {
-        return { success: false, error: 'No authentication token found' };
+        return { success: false, error: 'Authentication required' };
       }
 
       const response = await fetchWithTimeout(
@@ -461,32 +555,9 @@ export const favoritesAPI = {
       return { success: false, error: error.message };
     }
   },
-
-  // ✅ GET USER FAVORITES
-  getUserFavorites: async () => {
-    try {
-      const token = await getAuthToken();
-      if (!token) {
-        return { success: false, error: 'No authentication token found' };
-      }
-
-      const response = await fetchWithTimeout(`${API_BASE_URL}/favorites`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-      return { success: response.ok, data: Array.isArray(data) ? data : [] };
-    } catch (error) {
-      console.error('Get user favorites error:', error);
-      return { success: false, error: error.message, data: [] };
-    }
-  },
 };
 
-// Export all
+// ✅ Export all
 export default {
   authAPI,
   recipeAPI,

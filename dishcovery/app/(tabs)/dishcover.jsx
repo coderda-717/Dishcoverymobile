@@ -1,3 +1,5 @@
+// dishcovery/app/(tabs)/dishcover.jsx
+// ✅ CORRECTED - Uses proper API endpoint
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -12,8 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-
-const API_BASE_URL = 'https://dishcovery-backend-1.onrender.com/api';
+import { recipeAPI } from '../services/api';
 
 export default function Dishcover() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,27 +34,15 @@ export default function Dishcover() {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching recipes from backend...');
-      const response = await fetch(`${API_BASE_URL}/recipes`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch recipes: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('Recipes fetched:', data.length);
+      console.log('📥 Fetching recipes...');
+      const data = await recipeAPI.getAllRecipes();
+      console.log('✅ Recipes loaded:', data.length);
       
       setRecipes(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Failed to fetch recipes:', error);
+      console.error('❌ Failed to fetch recipes:', error);
       setError(error.message);
       
-      // Show user-friendly error
       Alert.alert(
         'Connection Error',
         'Unable to load recipes. Please check your internet connection and try again.',
@@ -90,16 +79,12 @@ export default function Dishcover() {
         const recipeCategory = recipe?.category || '';
         const recipeDesc = recipe?.description || '';
         
-        const nameMatch = recipeName.toLowerCase().includes(query);
-        const categoryMatch = recipeCategory.toLowerCase().includes(query);
-        const descMatch = recipeDesc.toLowerCase().includes(query);
-        
-        // Also check ingredients if available
-        const ingredientsMatch = recipe?.ingredients 
-          ? JSON.stringify(recipe.ingredients).toLowerCase().includes(query)
-          : false;
-        
-        return nameMatch || categoryMatch || descMatch || ingredientsMatch;
+        return (
+          recipeName.toLowerCase().includes(query) ||
+          recipeCategory.toLowerCase().includes(query) ||
+          recipeDesc.toLowerCase().includes(query) ||
+          (recipe?.ingredients && JSON.stringify(recipe.ingredients).toLowerCase().includes(query))
+        );
       })
     : [];
 
@@ -217,7 +202,7 @@ export default function Dishcover() {
                           onPress={() => handleRecipePress(recipe.id, recipe.name)}
                         >
                           <Image 
-                            source={{ uri: recipe.image }} 
+                            source={recipe.image ? { uri: recipe.image } : require('../../assets/images/recipeimages/placeholder.png')} 
                             style={styles.searchResultImage}
                           />
                           <View style={styles.searchResultInfo}>
@@ -278,7 +263,7 @@ export default function Dishcover() {
                     activeOpacity={0.8}
                   >
                     <Image 
-                      source={{ uri: recipe.image }} 
+                      source={recipe.image ? { uri: recipe.image } : require('../../assets/images/recipeimages/placeholder.png')} 
                       style={styles.gridImage}
                       resizeMode="cover"
                     />
@@ -300,7 +285,7 @@ export default function Dishcover() {
                   activeOpacity={0.8}
                 >
                   <Image 
-                    source={{ uri: recipe.image }} 
+                    source={recipe.image ? { uri: recipe.image } : require('../../assets/images/recipeimages/placeholder.png')} 
                     style={styles.gridImage}
                     resizeMode="cover"
                   />
