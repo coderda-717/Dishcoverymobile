@@ -1,5 +1,5 @@
 // dishcovery/app/(auth)/signup.jsx
-// ✅ CORRECTED - Properly sends firstName and lastName
+// ✅ UPDATED - Redirects to signin after successful signup
 import React, { useState } from "react";
 import {
   Text,
@@ -101,7 +101,6 @@ const SignUpScreen = () => {
     setLoading(true);
 
     try {
-      // ✅ Send data with correct field names
       const signupData = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
@@ -118,7 +117,7 @@ const SignUpScreen = () => {
 
         // Show success message
         setModalType('success');
-        setErrorMessage('Account created successfully! Redirecting...');
+        setErrorMessage('Account created successfully! Please log in.');
         setModalVisible(true);
 
         // Clear form
@@ -130,10 +129,10 @@ const SignUpScreen = () => {
           confirmPassword: "",
         });
 
-        // Auto-redirect after 2 seconds
+        // Redirect to signin after 2 seconds
         setTimeout(() => {
           setModalVisible(false);
-          router.replace("/(tabs)");
+          router.replace("/(auth)/signin");
         }, 2000);
       } else {
         const message = result.error || 'Signup failed. Please try again.';
@@ -154,7 +153,7 @@ const SignUpScreen = () => {
 
   const handleSuccessModalClose = () => {
     setModalVisible(false);
-    router.replace("/(tabs)");
+    router.replace("/(auth)/signin");
   };
 
   const handleRetry = () => {

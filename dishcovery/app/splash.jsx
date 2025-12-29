@@ -1,4 +1,5 @@
 // app/splash.jsx
+// ✅ UPDATED - Always shows onboarding, requires authentication every launch
 import React, { useEffect } from 'react';
 import { View, Image, Text, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -17,18 +18,17 @@ export default function SplashScreen() {
       // Show splash for 2 seconds
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Check if user has completed onboarding and is authenticated
-      const hasCompletedOnboarding = await AsyncStorage.getItem('hasCompletedOnboarding');
+      // Check authentication status
       const token = await AsyncStorage.getItem('userToken');
       
       if (token) {
-        // User is authenticated, go to main app
-        router.replace("/(tabs)");
-      } else if (hasCompletedOnboarding) {
-        // User has seen onboarding but not logged in, go to signin
-        router.replace("/(auth)/signin");
+        // User is authenticated, but still show onboarding
+        // Clear any previous onboarding flag to ensure it shows
+        await AsyncStorage.removeItem('hasCompletedOnboarding');
+        router.replace("/(auth)/onboarding");
       } else {
-        // First time user, show onboarding (which includes welcome as first slide)
+        // User is not authenticated, show onboarding
+        await AsyncStorage.removeItem('hasCompletedOnboarding');
         router.replace("/(auth)/onboarding");
       }
       
@@ -39,8 +39,6 @@ export default function SplashScreen() {
     }
   };
 
-  
-  
   return (
     <SafeAreaView style={{ backgroundColor: "#ffffff", flex: 1 }}>
       <View
