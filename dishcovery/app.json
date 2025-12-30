@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.damitunz.dishcovery"
+      "bundleIdentifier": "com.damitunz.dishcovery",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.damitunz.dishcovery",
