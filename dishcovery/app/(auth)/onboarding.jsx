@@ -1,5 +1,4 @@
-// app/(auth)/onboarding.jsx
-// ✅ UPDATED - Always redirects to signin, never to tabs
+// dishcovery/app/(auth)/onboarding.jsx
 import React, { useState, useRef } from "react";
 import {
   View,
@@ -12,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get("window");
 
@@ -71,9 +71,17 @@ export default function Onboarding() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const slidesRef = useRef(null);
 
-  const completeOnboarding = () => {
-    // Always redirect to signin - authentication is mandatory
-    router.replace("/(auth)/signin");
+  const completeOnboarding = async () => {
+    try {
+      // Mark onboarding as completed
+      await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
+      // Always redirect to signin - authentication is mandatory
+      router.replace("/(auth)/signin");
+    } catch (error) {
+      console.error('Error saving onboarding status:', error);
+      // Still redirect even if save fails
+      router.replace("/(auth)/signin");
+    }
   };
 
   const handleNext = () => {

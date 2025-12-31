@@ -3,13 +3,12 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authAPI } from '../services/api';
 import AuthInput from '../components/input';
 import AuthButton from '../components/button';
 import DishSafeAreaView from '../components/DishSafearea';
 import AuthStyles from '../(auth)/AuthStyle';
 import StatusModal from '../components/StatusModal';
-
-const API_BASE_URL = 'https://dishcovery-backend-1.onrender.com/api';
 
 const SignInScreen = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -57,33 +56,15 @@ const SignInScreen = () => {
     setLoading(true);
 
     try {
-      // ✅ FIXED: Send data exactly as backend expects
-      const loginData = {
-        email: form.email.trim().toLowerCase(),
-        password: form.password
-      };
-
-      console.log('🚀 Sending login request for:', loginData.email);
+      console.log('🚀 Attempting login for:', form.email);
       
       const result = await authAPI.login(form.email, form.password);
 
-if (result.success) {
-  setForm({ email: "", password: "" });
-  router.replace("/(tabs)");
-} else {
-  setErrorMessage(result.error || 'Invalid email or password');
-  setModalType('error');
-  setModalVisible(true);
-}
-      const data = await response.json();
-      console.log('📥 Login response:', response.status, data);
-
-      if (response.ok && data.token && data.user) {
+      if (result.success) {
         console.log('✅ Login successful');
 
-        // Save user data
-        await AsyncStorage.setItem('userToken', data.token);
-        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        // Ensure onboarding is marked as completed
+        await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
         
         // Clear form
         setForm({ email: "", password: "" });
@@ -92,7 +73,7 @@ if (result.success) {
         router.replace("/(tabs)");
       } else {
         // Handle error response
-        const message = data.error || data.message || 'Invalid email or password';
+        const message = result.error || 'Invalid email or password';
         console.error('❌ Login failed:', message);
         setErrorMessage(message);
         setModalType('error');
