@@ -1,4 +1,5 @@
 // dishcovery/app/(auth)/signin.jsx
+// ✅ FIXED - Properly navigates to tabs after authentication
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from "expo-router";
@@ -69,8 +70,10 @@ const SignInScreen = () => {
         // Clear form
         setForm({ email: "", password: "" });
         
-        // Navigate to main app
+        // ✅ FIX: Use replace to navigate to tabs - prevents going back
+        console.log('🔄 Navigating to tabs...');
         router.replace("/(tabs)");
+        
       } else {
         // Handle error response
         const message = result.error || 'Invalid email or password';

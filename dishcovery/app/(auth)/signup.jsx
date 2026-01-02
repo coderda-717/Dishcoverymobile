@@ -1,5 +1,5 @@
 // dishcovery/app/(auth)/signup.jsx
-// ✅ UPDATED - Redirects to signin after successful signup
+// ✅ FIXED - Redirects to signin after successful signup (no auto-login)
 import React, { useState } from "react";
 import {
   Text,
@@ -37,6 +37,7 @@ const SignUpScreen = () => {
   });
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
 
@@ -115,9 +116,9 @@ const SignUpScreen = () => {
       if (result.success) {
         console.log('✅ Signup successful');
 
-        // Show success message
+        // ✅ FIX: Do NOT auto-login - just show success and redirect to signin
         setModalType('success');
-        setErrorMessage('Account created successfully! Please log in.');
+        setSuccessMessage('Account created successfully! Please log in with your credentials.');
         setModalVisible(true);
 
         // Clear form
@@ -129,11 +130,12 @@ const SignUpScreen = () => {
           confirmPassword: "",
         });
 
-        // Redirect to signin after 2 seconds
+        // ✅ FIX: Redirect to signin after 2 seconds
         setTimeout(() => {
           setModalVisible(false);
           router.replace("/(auth)/signin");
         }, 2000);
+        
       } else {
         const message = result.error || 'Signup failed. Please try again.';
         console.error('❌ Signup failed:', message);
@@ -285,7 +287,7 @@ const SignUpScreen = () => {
         <StatusModal
           visible={modalVisible}
           type={modalType}
-          message={errorMessage}
+          message={modalType === 'success' ? successMessage : errorMessage}
           onClose={handleCloseModal}
           onRetry={modalType === 'error' ? handleRetry : undefined}
         />
