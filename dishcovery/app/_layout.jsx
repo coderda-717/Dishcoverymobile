@@ -1,4 +1,6 @@
 // dishcovery/app/_layout.jsx
+// ✅ FIXED - Properly handles authentication and onboarding flow
+
 import React, { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
@@ -11,6 +13,7 @@ function RootLayoutNav() {
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 
   const [fontsLoaded] = useFonts({
     'GoogleSans-Regular': require('../assets/fonts/GoogleSans-Regular.ttf'),
@@ -27,33 +30,62 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
+    const inSplash = segments[0] === 'splash';
 
-    if (!isAuthenticated && !inAuthGroup) {
-      // User is not authenticated and not in auth flow, redirect to splash
+    console.log('🧭 Navigation check:', { 
+      segments, 
+      isAuthenticated, 
+      hasCompletedOnboarding,
+      inAuthGroup,
+      inTabsGroup,
+      inSplash
+    });
+
+    // ✅ CRITICAL FIX: Proper navigation priority
+    if (isAuthenticated && hasCompletedOnboarding) {
+      // User is fully authenticated and onboarded
+      if (!inTabsGroup) {
+        console.log('➡️ Authenticated user -> Redirecting to tabs');
+        router.replace('/(tabs)');
+      }
+    } else if (!hasCompletedOnboarding && !inSplash) {
+      // User hasn't completed onboarding
+      console.log('➡️ No onboarding -> Redirecting to splash');
       router.replace('/splash');
-    } else if (isAuthenticated && inAuthGroup) {
-      // User is authenticated but still in auth screens, redirect to tabs
-      router.replace('/(tabs)');
+    } else if (hasCompletedOnboarding && !isAuthenticated && !inAuthGroup) {
+      // User completed onboarding but not authenticated
+      console.log('➡️ Not authenticated -> Redirecting to signin');
+      router.replace('/(auth)/signin');
     }
-  }, [isReady, isAuthenticated, segments, fontsLoaded]);
+  }, [isReady, isAuthenticated, hasCompletedOnboarding, segments, fontsLoaded]);
 
   const checkAuthStatus = async () => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      const hasCompletedOnboarding = await AsyncStorage.getItem('hasCompletedOnboarding');
+      // ✅ FIX: Check for both userToken AND authToken (in case your API uses different key)
+      const [userToken, authToken, onboardingStatus] = await AsyncStorage.multiGet([
+        'userToken',
+        'authToken',
+        'hasCompletedOnboarding'
+      ]);
+      
+      const token = userToken[1] || authToken[1];
+      const hasOnboarded = onboardingStatus[1] === 'true';
+      
+      console.log('🔍 Initial auth check:', { 
+        hasToken: !!token, 
+        hasOnboarded,
+        userToken: !!userToken[1],
+        authToken: !!authToken[1]
+      });
       
       setIsAuthenticated(!!token);
-      
-      // If not authenticated or hasn't completed onboarding, start from splash
-      if (!token || !hasCompletedOnboarding) {
-        setIsReady(true);
-        return;
-      }
-      
+      setHasCompletedOnboarding(hasOnboarded);
       setIsReady(true);
+      
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error('❌ Error checking auth status:', error);
       setIsAuthenticated(false);
+      setHasCompletedOnboarding(false);
       setIsReady(true);
     }
   };
