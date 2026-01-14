@@ -16,7 +16,7 @@ import { authAPI } from '../services/api';
 import AuthInput from "../components/input";
 import AuthButton from "../components/button";
 import DishSafeAreaView from "../components/DishSafearea";
-import AuthStyles from '../(auth)/AuthStyle';
+import AuthStyles1 from '../(auth)/AuthStyle1';
 import StatusModal from '../components/StatusModal';
 
 const SignUpScreen = () => {
@@ -179,20 +179,20 @@ const SignUpScreen = () => {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView 
-          contentContainerStyle={AuthStyles.scrollContent} 
+          contentContainerStyle={AuthStyles1.scrollContent} 
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Image source={require("../../assets/images/image1.png")} style={AuthStyles.image1} />
+          <Image source={require("../../assets/images/image1.png")} style={AuthStyles1.image1} />
 
-          <View style={AuthStyles.headerContainer}>
-            <Image source={require("../../assets/images/icon.png")} style={AuthStyles.logo} />
-            <Text style={AuthStyles.title}>Ready to Dishcover?</Text>
-            <Text style={AuthStyles.subtitle}>Fill in your details to sign up</Text>
+          <View style={AuthStyles1.headerContainer}>
+            <Image source={require("../../assets/images/icon.png")} style={AuthStyles1.logo} />
+            <Text style={AuthStyles1.title}>Ready to Dishcover?</Text>
+            <Text style={AuthStyles1.subtitle}>Fill in your details to sign up</Text>
           </View>
 
-          <View style={AuthStyles.formContainer}>
-            <Text style={AuthStyles.label}>First name</Text>
+          <View style={AuthStyles1.formContainer}>
+            <Text style={AuthStyles1.label}>First name</Text>
             <AuthInput
               placeholder="First Name"
               value={form.firstName}
@@ -203,7 +203,7 @@ const SignUpScreen = () => {
               <Text style={styles.errorText}>{errors.firstName}</Text>
             ) : null}
 
-            <Text style={AuthStyles.label}>Last name</Text>
+            <Text style={AuthStyles1.label}>Last name</Text>
             <AuthInput 
               placeholder="Last Name" 
               value={form.lastName} 
@@ -214,7 +214,7 @@ const SignUpScreen = () => {
               <Text style={styles.errorText}>{errors.lastName}</Text>
             ) : null}
 
-            <Text style={AuthStyles.label}>Email</Text>
+            <Text style={AuthStyles1.label}>Email</Text>
             <AuthInput 
               placeholder="Email" 
               value={form.email} 
@@ -227,7 +227,7 @@ const SignUpScreen = () => {
               <Text style={styles.errorText}>{errors.email}</Text>
             ) : null}
 
-            <Text style={AuthStyles.label}>Password</Text>
+            <Text style={AuthStyles1.label}>Password</Text>
             <AuthInput
               placeholder="Password"
               secureTextEntry
@@ -239,7 +239,7 @@ const SignUpScreen = () => {
               <Text style={styles.errorText}>{errors.password}</Text>
             ) : null}
 
-            <Text style={AuthStyles.label}>Confirm Password</Text>
+            <Text style={AuthStyles1.label}>Confirm Password</Text>
             <AuthInput
               placeholder="Confirm Password"
               secureTextEntry
@@ -252,7 +252,7 @@ const SignUpScreen = () => {
             ) : null}
           </View>
 
-          <View style={AuthStyles.buttonContainer}>
+          <View style={AuthStyles1.buttonContainer}>
             <AuthButton 
               title={loading ? "Creating Account..." : "Sign Up"} 
               onPress={handleSignUp}
@@ -280,7 +280,7 @@ const SignUpScreen = () => {
             onPress={() => router.push("/(auth)/signin")}
             disabled={loading}
           >
-            <Text style={AuthStyles.link}>Already have an account? Log In</Text>
+            <Text style={AuthStyles1.link}>Already have an account? Log In</Text>
           </TouchableOpacity>
         </ScrollView>
 

@@ -1,6 +1,5 @@
 // dishcovery/app/(auth)/signin.jsx
-// ✅ FIXED - Sets correct AsyncStorage keys and navigates properly
-
+// ✅ FIXED - Properly navigates to tabs after authentication
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from "expo-router";
@@ -65,47 +64,13 @@ const SignInScreen = () => {
       if (result.success) {
         console.log('✅ Login successful');
 
-        // ✅ CRITICAL FIX: Set ALL necessary AsyncStorage keys
-        try {
-          const storageData = [
-            ['hasCompletedOnboarding', 'true'],
-            ['isAuthenticated', 'true'],
-            ['userEmail', form.email],
-          ];
-
-          // ✅ Add the token from API response
-          // Check what key your authAPI.login returns (token, authToken, accessToken, etc.)
-          if (result.token) {
-            storageData.push(['userToken', result.token]);
-            storageData.push(['authToken', result.token]); // Set both just in case
-          } else if (result.authToken) {
-            storageData.push(['userToken', result.authToken]);
-            storageData.push(['authToken', result.authToken]);
-          } else if (result.accessToken) {
-            storageData.push(['userToken', result.accessToken]);
-            storageData.push(['authToken', result.accessToken]);
-          }
-
-          // If your API returns user data, store it too
-          if (result.user) {
-            storageData.push(['userData', JSON.stringify(result.user)]);
-          }
-
-          await AsyncStorage.multiSet(storageData);
-          
-          console.log('✅ AsyncStorage updated:', storageData.map(([key]) => key));
-          
-          // ✅ Small delay to ensure AsyncStorage write completes
-          await new Promise(resolve => setTimeout(resolve, 150));
-          
-        } catch (storageError) {
-          console.error('❌ AsyncStorage error:', storageError);
-        }
+        // Ensure onboarding is marked as completed
+        await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
         
         // Clear form
         setForm({ email: "", password: "" });
         
-        // ✅ Navigate to tabs
+        // ✅ FIX: Use replace to navigate to tabs - prevents going back
         console.log('🔄 Navigating to tabs...');
         router.replace("/(tabs)");
         
@@ -152,7 +117,7 @@ const SignInScreen = () => {
             <Image source={require("../../assets/images/image2.png")} style={AuthStyles.image2} />
           </View>
           
-          <View style={{ flex: 2, marginTop: 150 }}>
+          <View style={{ flex: 2, marginTop: 138 }}>
             <View style={AuthStyles.headerContainer}>
               <Image source={require("../../assets/images/icon.png")} style={AuthStyles.logo} />
               <Text style={AuthStyles.title}>Welcome Back!</Text>

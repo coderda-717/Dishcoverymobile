@@ -1,5 +1,5 @@
-// app/index.js
-// Updated design to match the picture
+// app/(tabs)/index.js
+// Updated design with logout on back button press and local recipe fallback
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -9,15 +9,20 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
-  TextInput,
   ActivityIndicator,
   RefreshControl,
   Alert,
+  BackHandler,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { recipeAPI } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import localRecipes from '../recipe/recipe'; // ✅ Import local recipes
+
 
 export default function Home() {
   const router = useRouter();
@@ -27,6 +32,8 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [usingLocalData, setUsingLocalData] = useState(false);
 
   // Categories match backend categories
   const categories = ['All', 'Nigerian', 'Continental', 'Chinese', 'Italian', 'Mexican'];
@@ -39,14 +46,81 @@ export default function Home() {
     filterRecipes();
   }, [searchQuery, selectedCategory, recipes]);
 
+  // ✅ Only handle back button when THIS screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+      
+      return () => backHandler.remove();
+    }, [])
+  );
+
+  const handleBackPress = () => {
+    // Show logout confirmation modal
+    setShowLogoutModal(true);
+    return true; // Prevent default back behavior
+  };
+
+  const handleLogout = async () => {
+    try {
+      console.log('🚪 Logging out...');
+      
+      // Clear all auth data from AsyncStorage
+      await AsyncStorage.multiRemove([
+        'userToken',
+        'authToken',
+        'isAuthenticated',
+        'userEmail',
+        'userData',
+      ]);
+      
+      console.log('✅ Logout successful');
+      
+      // Close modal
+      setShowLogoutModal(false);
+      
+      // Navigate to signin
+      router.replace('/(auth)/signin');
+      
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutModal(false);
+  };
+
   const fetchRecipes = async () => {
     try {
+      console.log('📥 Fetching recipes from API...');
       const data = await recipeAPI.getAllRecipes();
-      setRecipes(data);
-      setFilteredRecipes(data);
+      
+      if (data && data.length > 0) {
+        console.log('✅ API recipes loaded:', data.length);
+        // ✅ Convert image paths for API recipes
+        const recipesWithImages = data.map(recipe => ({
+          ...recipe,
+          // If image is a local path, keep it; otherwise use the URL
+          image: recipe.image || 'https://via.placeholder.com/400x300?text=Recipe'
+        }));
+        setRecipes(recipesWithImages);
+        setFilteredRecipes(recipesWithImages);
+        setUsingLocalData(false);
+      } else {
+        // ✅ Use local recipes as fallback
+        console.log('⚠️ No API recipes, using local data');
+        setRecipes(localRecipes);
+        setFilteredRecipes(localRecipes);
+        setUsingLocalData(true);
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to fetch recipes. Please try again.');
-      console.error('Error fetching recipes:', error);
+      console.error('❌ API error, using local recipes:', error);
+      // ✅ Use local recipes as fallback on error
+      setRecipes(localRecipes);
+      setFilteredRecipes(localRecipes);
+      setUsingLocalData(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -108,7 +182,7 @@ export default function Home() {
       })}
     >
       <Image
-        source={{ uri: item.image }}
+        source={typeof item.image === 'string' ? { uri: item.image } : item.image}
         style={styles.recipeImage}
         defaultSource={require('../../assets/images/recipeimages/placeholder.png')}
       />
@@ -184,6 +258,9 @@ export default function Home() {
       {/* Simple header with just title */}
       <View style={styles.header}>
         <Text style={styles.title}>Dishcovery</Text>
+        {usingLocalData && (
+          <Text style={styles.offlineBadge}>Offline Mode</Text>
+        )}
       </View>
 
       {/* Category buttons */}
@@ -227,6 +304,41 @@ export default function Home() {
           }
         />
       )}
+
+      {/* ✅ Logout Confirmation Modal */}
+      <Modal
+        visible={showLogoutModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Ionicons name="log-out-outline" size={48} color="#ff4458" style={styles.modalIcon} />
+            
+            <Text style={styles.modalTitle}>Logout</Text>
+            <Text style={styles.modalMessage}>Do you want to logout?</Text>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalButton}
+                onPress={handleLogout}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalButtonText}>Yes</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.modalButton}
+                onPress={handleCancelLogout}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalButtonText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -258,16 +370,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
-    fontFamily: 'Google Sans',
+    fontFamily: 'GoogleSans-Bold',
   },
-  searchContainer: {
-    display: 'none',
-  },
-  searchIcon: {
-    display: 'none',
-  },
-  searchInput: {
-    display: 'none',
+  offlineBadge: {
+    fontSize: 11,
+    color: '#ff4458',
+    marginTop: 4,
+    fontFamily: 'GoogleSans-Regular',
   },
   categoriesContainer: {
     paddingTop: 8,
@@ -382,5 +491,59 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
+  },
+  // ✅ Logout Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 30,
+    width: '80%',
+    maxWidth: 340,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalIcon: {
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    backgroundColor: '#ff4458',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

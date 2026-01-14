@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
 import { COLORS, SIZES } from "../../theme/theme";
 
- const AuthStyles = StyleSheet.create({
+ const AuthStyles1 = StyleSheet.create({
     scrollContent: {
     flexGrow: 1,
     padding: 24,
@@ -42,13 +42,26 @@ import { COLORS, SIZES } from "../../theme/theme";
     marginTop: -5,
   },
   formContainer: {
-     marginTop: -10,
-     marginBottom: -5,
+     marginTop: -12,
+     marginBottom: 2,
   },
   buttonContainer: {
     marginTop: -1,
     marginBottom: -10,
+    width: '50%',
+    height: '10%',
+    flexDirection: 'row',
+    justifyContent: 'space-between', 
+    gap: 10,
   },
+ button:{
+  width: '30%',
+  },
+  content: {
+    alignItems: 'left',
+    justifyContent: 'left',
+  },
+
   link: {
     textAlign: "center",
     color: COLORS.red,
@@ -83,4 +96,4 @@ import { COLORS, SIZES } from "../../theme/theme";
 })
 
 
-export default AuthStyles;
+export default AuthStyles1;

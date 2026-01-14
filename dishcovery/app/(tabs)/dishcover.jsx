@@ -1,5 +1,5 @@
 // dishcovery/app/(tabs)/dishcover.jsx
-// ✅ CORRECTED - Uses proper API endpoint
+// ✅ Updated with local recipe fallback
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { recipeAPI } from '../services/api';
+import localRecipes from '../recipe/recipe'; // ✅ Import local recipes
 
 export default function Dishcover() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,6 +24,7 @@ export default function Dishcover() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [usingLocalData, setUsingLocalData] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -34,23 +36,30 @@ export default function Dishcover() {
       setLoading(true);
       setError(null);
 
-      console.log('📥 Fetching recipes...');
+      console.log('📥 Fetching recipes from API...');
       const data = await recipeAPI.getAllRecipes();
-      console.log('✅ Recipes loaded:', data.length);
       
-      setRecipes(Array.isArray(data) ? data : []);
+      if (data && Array.isArray(data) && data.length > 0) {
+        console.log('✅ API recipes loaded:', data.length);
+        // ✅ Convert image paths for API recipes
+        const recipesWithImages = data.map(recipe => ({
+          ...recipe,
+          image: recipe.image || 'https://via.placeholder.com/400x300?text=Recipe'
+        }));
+        setRecipes(recipesWithImages);
+        setUsingLocalData(false);
+      } else {
+        // ✅ Use local recipes as fallback
+        console.log('⚠️ No API recipes, using local data');
+        setRecipes(localRecipes);
+        setUsingLocalData(true);
+      }
     } catch (error) {
-      console.error('❌ Failed to fetch recipes:', error);
+      console.error('❌ API error, using local recipes:', error);
       setError(error.message);
-      
-      Alert.alert(
-        'Connection Error',
-        'Unable to load recipes. Please check your internet connection and try again.',
-        [
-          { text: 'OK' },
-          { text: 'Retry', onPress: loadRecipes }
-        ]
-      );
+      // ✅ Use local recipes as fallback on error
+      setRecipes(localRecipes);
+      setUsingLocalData(true);
     } finally {
       setLoading(false);
     }
@@ -119,27 +128,14 @@ export default function Dishcover() {
     );
   }
 
-  if (error && recipes.length === 0) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.header}>Dishcovery</Text>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>🍽️</Text>
-          <Text style={styles.errorTitle}>Unable to Load Recipes</Text>
-          <Text style={styles.errorText}>
-            Please check your internet connection
-          </Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadRecipes}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>Dishcovery</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>Dishcovery</Text>
+        {usingLocalData && (
+          <Text style={styles.offlineBadge}>Offline Mode</Text>
+        )}
+      </View>
 
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
@@ -202,7 +198,7 @@ export default function Dishcover() {
                           onPress={() => handleRecipePress(recipe.id, recipe.name)}
                         >
                           <Image 
-                            source={recipe.image ? { uri: recipe.image } : require('../../assets/images/recipeimages/placeholder.png')} 
+                            source={typeof recipe.image === 'string' ? { uri: recipe.image } : recipe.image}
                             style={styles.searchResultImage}
                           />
                           <View style={styles.searchResultInfo}>
@@ -263,7 +259,7 @@ export default function Dishcover() {
                     activeOpacity={0.8}
                   >
                     <Image 
-                      source={recipe.image ? { uri: recipe.image } : require('../../assets/images/recipeimages/placeholder.png')} 
+                      source={typeof recipe.image === 'string' ? { uri: recipe.image } : recipe.image}
                       style={styles.gridImage}
                       resizeMode="cover"
                     />
@@ -285,7 +281,7 @@ export default function Dishcover() {
                   activeOpacity={0.8}
                 >
                   <Image 
-                    source={recipe.image ? { uri: recipe.image } : require('../../assets/images/recipeimages/placeholder.png')} 
+                    source={typeof recipe.image === 'string' ? { uri: recipe.image } : recipe.image}
                     style={styles.gridImage}
                     resizeMode="cover"
                   />
@@ -313,12 +309,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     position: 'relative',
   },
+  headerContainer: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
-    paddingVertical: 16,
     fontFamily: 'GoogleSans-Bold',
+  },
+  offlineBadge: {
+    fontSize: 11,
+    color: '#ff4458',
+    marginTop: 4,
+    fontFamily: 'GoogleSans-Regular',
   },
   loadingContainer: {
     flex: 1,
@@ -329,30 +333,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: '#666',
-    fontFamily: 'GoogleSans-Regular',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  errorIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-    fontFamily: 'GoogleSans-Bold',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 24,
     fontFamily: 'GoogleSans-Regular',
   },
   retryButton: {

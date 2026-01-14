@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI, userAPI } from '../services/api'; // ✅ Adjust this path if needed
+import DEFAULT_PROFILE_IMAGE from '../(tabs)/profile.jsx';
 
 export default function editprofile() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function editprofile() {
           userData.username ||
           `@${userData.firstName?.toLowerCase() || 'user'}`,
         profileImage:
-          userData.profileImage || 'https://i.pravatar.cc/150?img=47',
+         userData.profileImage || DEFAULT_PROFILE_IMAGE,
         firstName: userData.firstName || '',
         lastName: userData.lastName || '',
       });

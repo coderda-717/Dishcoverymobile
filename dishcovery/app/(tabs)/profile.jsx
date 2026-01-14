@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const DEFAULT_PROFILE_IMAGE = 'https://res.cloudinary.com/dguseowoa/image/upload/v1762823979/amala_and_gbegiri_lkovb8.jpg';
+const DEFAULT_PROFILE_IMAGE = require('../../assets/images/profile.jpg');
 
 export default function Profile() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     loadProfileData();
@@ -57,32 +58,42 @@ export default function Profile() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      "Log Out",
-      "Are you sure you want to log out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Log Out", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await AsyncStorage.removeItem('userToken');
-              await AsyncStorage.removeItem('userData');
-              
-              setIsAuthenticated(false);
-              setUserData(null);
-              
-              // Redirect to splash screen (which will show onboarding then signin)
-              router.replace('/splash');
-            } catch (error) {
-              console.error('Logout error:', error);
-              Alert.alert('Error', 'Failed to log out. Please try again.');
-            }
-          }
-        }
-      ]
-    );
+    // Show logout modal instead of Alert
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      console.log('🚪 Logging out...');
+      
+      // Clear all auth data from AsyncStorage
+      await AsyncStorage.multiRemove([
+        'userToken',
+        'authToken',
+        'isAuthenticated',
+        'userEmail',
+        'userData',
+      ]);
+      
+      console.log('✅ Logout successful');
+      
+      setIsAuthenticated(false);
+      setUserData(null);
+      
+      // Close modal
+      setShowLogoutModal(false);
+      
+      // Navigate to signin
+      router.replace('/(auth)/signin');
+      
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const handleProtectedAction = (path) => {
@@ -215,6 +226,41 @@ export default function Profile() {
           <Ionicons name="log-out-outline" size={20} color="#ff4458" />
         </TouchableOpacity>
       </ScrollView>
+
+      {/* ✅ Logout Confirmation Modal - Same as index.jsx */}
+      <Modal
+        visible={showLogoutModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Ionicons name="log-out-outline" size={48} color="#ff4458" style={styles.modalIcon} />
+            
+            <Text style={styles.modalTitle}>Logout</Text>
+            <Text style={styles.modalMessage}>Do you want to logout?</Text>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalButton}
+                onPress={confirmLogout}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalButtonText}>Yes</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.modalButton}
+                onPress={handleCancelLogout}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalButtonText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -332,5 +378,59 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#ff4458',
     fontFamily: 'GoogleSans-Medium',
+  },
+  // ✅ Logout Modal Styles - Same as index.jsx
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 30,
+    width: '80%',
+    maxWidth: 340,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalIcon: {
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    backgroundColor: '#ff4458',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
