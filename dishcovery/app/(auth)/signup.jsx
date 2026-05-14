@@ -267,8 +267,8 @@ const SignUpScreen = () => {
             )}
             
             <AuthButton 
-              title="Continue with Google" 
-              type="google" 
+              title=" Use Google" 
+              type="google"
               onPress={() => {
                 // Google sign-in coming soon
               }}

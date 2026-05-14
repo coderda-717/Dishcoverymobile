@@ -23,7 +23,7 @@ import { COLORS, SIZES } from "../../theme/theme";
     fontSize: SIZES.heading,
     fontWeight: "550",
     color: COLORS.black,
-    marginBottom: 14,
+    marginBottom: 12,
     fontFamily: 'GoogleSans-Regular',
   },
   subtitle: {
@@ -47,7 +47,7 @@ import { COLORS, SIZES } from "../../theme/theme";
   },
   buttonContainer: {
     marginTop: -1,
-    marginBottom: -10,
+    marginBottom: 20,
     width: '50%',
     height: '10%',
     flexDirection: 'row',
@@ -58,8 +58,8 @@ import { COLORS, SIZES } from "../../theme/theme";
   width: '30%',
   },
   content: {
-    alignItems: 'left',
-    justifyContent: 'left',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   link: {
@@ -79,7 +79,7 @@ import { COLORS, SIZES } from "../../theme/theme";
   forgotLink: {
     textAlign: "right",
     fontWeight: "200",
-       fontSize: SIZES.regular,
+    fontSize: SIZES.regular,
     marginBottom: 12,
     marginTop: 28,
     fontFamily: 'GoogleSans-Regular',

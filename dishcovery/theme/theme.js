@@ -9,11 +9,11 @@ const COLORS = {
 }
 
 const SIZES = {
-    heading : 23,
+    heading : 18,
     regular : 12.3,
     large: 27,
     small: 9.5,
-    button : 15
+    button : 18
 
 }
 

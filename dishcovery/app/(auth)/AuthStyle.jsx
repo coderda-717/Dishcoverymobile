@@ -47,7 +47,7 @@ import { COLORS, SIZES } from "../../theme/theme";
   },
   buttonContainer: {
     marginTop: -1,
-    marginBottom: -10,
+    marginBottom: -9,
   },
   link: {
     textAlign: "center",
