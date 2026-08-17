@@ -5,6 +5,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIn
 import { useRouter } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import AuthInput from '../components/input';
 import AuthButton from '../components/button';
 import DishSafeAreaView from '../components/DishSafearea';
@@ -18,7 +19,9 @@ const SignInScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [guestLoading, setGuestLoading] = useState(false);
   const router = useRouter();
+  const { continueAsGuest } = useAuth();
 
   const handleChange = (name, value) => {
     setForm({ ...form, [name]: value });
@@ -101,6 +104,22 @@ const SignInScreen = () => {
     setModalVisible(false);
   };
 
+  const handleGuestLogin = async () => {
+    setGuestLoading(true);
+    try {
+      // No credentials are saved for a guest session — access only.
+      await continueAsGuest();
+      router.replace("/(tabs)");
+    } catch (error) {
+      console.error('❌ Guest login error:', error);
+      setErrorMessage('Could not continue as guest. Please try again.');
+      setModalType('error');
+      setModalVisible(true);
+    } finally {
+      setGuestLoading(false);
+    }
+  };
+
   return (
     <DishSafeAreaView>
       <KeyboardAvoidingView 
@@ -180,6 +199,20 @@ const SignInScreen = () => {
                 }}
                 disabled={loading}
               />
+
+              <AuthButton
+                title={guestLoading ? "Continuing as guest..." : "Login as Guest"}
+                type="guest"
+                onPress={handleGuestLogin}
+                disabled={loading || guestLoading}
+              />
+              {guestLoading && (
+                <ActivityIndicator
+                  size="small"
+                  color="#FF4C4C"
+                  style={styles.loader}
+                />
+              )}
             </View>
 
             <TouchableOpacity 

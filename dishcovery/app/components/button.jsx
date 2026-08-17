@@ -1,14 +1,28 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, Image, View } from 'react-native';
 
-const AuthButton = ({ title, onPress, type = 'primary' }) => {
+const AuthButton = ({ title, onPress, type = 'primary', disabled = false }) => {
   const isGoogle = type === 'google';
+  const isGuest = type === 'guest';
+
+  const buttonStyle = isGoogle
+    ? styles.google
+    : isGuest
+    ? styles.guest
+    : styles.primary;
+
+  const textStyle = isGoogle
+    ? styles.googleText
+    : isGuest
+    ? styles.guestText
+    : styles.primaryText;
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.button, isGoogle ? styles.google : styles.primary]}
+      style={[styles.button, buttonStyle, disabled && styles.disabled]}
       activeOpacity={0.8}
+      disabled={disabled}
     >
       <View style={styles.content}>
         {isGoogle && (
@@ -17,7 +31,7 @@ const AuthButton = ({ title, onPress, type = 'primary' }) => {
             style={styles.logo}
           />
         )}
-        <Text style={[styles.text, isGoogle ? styles.googleText : styles.primaryText]}>
+        <Text style={[styles.text, textStyle]}>
           {title}
         </Text>
       </View>
@@ -41,6 +55,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
   },
+  guest: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FF4C4C',
+  },
+  disabled: {
+    opacity: 0.5,
+  },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -61,6 +83,9 @@ const styles = StyleSheet.create({
   },
   googleText: {
     color: '#333',
+  },
+  guestText: {
+    color: '#FF4C4C',
   },
 });
 

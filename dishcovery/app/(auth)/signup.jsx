@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { authAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import AuthInput from "../components/input";
 import AuthButton from "../components/button";
 import DishSafeAreaView from "../components/DishSafearea";
@@ -39,7 +40,9 @@ const SignUpScreen = () => {
   const [modalType, setModalType] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [guestLoading, setGuestLoading] = useState(false);
   const router = useRouter();
+  const { continueAsGuest } = useAuth();
 
   const handleChange = (name, value) => {
     setForm({ ...form, [name]: value });
@@ -150,6 +153,22 @@ const SignUpScreen = () => {
       setModalVisible(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGuestSignup = async () => {
+    setGuestLoading(true);
+    try {
+      // No name, email, or password is ever saved for a guest session.
+      await continueAsGuest();
+      router.replace("/(tabs)");
+    } catch (error) {
+      console.error('❌ Guest signup error:', error);
+      setErrorMessage('Could not continue as guest. Please try again.');
+      setModalType('error');
+      setModalVisible(true);
+    } finally {
+      setGuestLoading(false);
     }
   };
 
@@ -274,6 +293,20 @@ const SignUpScreen = () => {
               }}
               disabled={loading}
             />
+
+            <AuthButton
+              title={guestLoading ? "Continuing as guest..." : "Signup as Guest"}
+              type="guest"
+              onPress={handleGuestSignup}
+              disabled={loading || guestLoading}
+            />
+            {guestLoading && (
+              <ActivityIndicator
+                size="small"
+                color="#FF4C4C"
+                style={styles.loader}
+              />
+            )}
           </View>
 
           <TouchableOpacity 

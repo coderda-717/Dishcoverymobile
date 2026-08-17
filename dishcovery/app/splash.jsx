@@ -15,8 +15,8 @@ export default function SplashScreen() {
 
   const initializeApp = async () => {
     try {
-      // Show splash for 2 seconds
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Show splash for 3 seconds
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       // Check authentication status
       const token = await AsyncStorage.getItem('userToken');
@@ -56,7 +56,7 @@ export default function SplashScreen() {
             marginBottom: 24,
             resizeMode: "contain",
           }}
-          source={require("../assets/images/icon.png")}
+          source={require("../assets/images/icon1.png")}
         />
 
         <Text

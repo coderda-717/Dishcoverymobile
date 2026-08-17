@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI, userAPI } from '../services/api';
+import { enterGuestMode, exitGuestMode, isGuestMode } from '../services/localFallback';
 
 const AuthContext = createContext();
 
@@ -9,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   // Load user data on app start
   useEffect(() => {
@@ -17,6 +19,14 @@ export const AuthProvider = ({ children }) => {
 
   const loadUserData = async () => {
     try {
+      const guest = await isGuestMode();
+      if (guest) {
+        // Guest sessions never have a token/user profile saved
+        setIsGuest(true);
+        setIsAuthenticated(false);
+        return;
+      }
+
       const savedToken = await AsyncStorage.getItem('userToken');
       const savedUser = await AsyncStorage.getItem('userData');
       
@@ -32,6 +42,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✅ GUEST ACCESS - lets someone use the app without logging in or
+  // signing up. No email, password, name, or token is ever saved.
+  const continueAsGuest = async () => {
+    try {
+      await enterGuestMode();
+      setUser(null);
+      setToken(null);
+      setIsAuthenticated(false);
+      setIsGuest(true);
+      return { success: true };
+    } catch (error) {
+      console.error('Guest access error:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   const login = async (email, password) => {
     try {
       const result = await authAPI.login(email, password);
@@ -42,15 +68,17 @@ export const AuthProvider = ({ children }) => {
         // Save token and user data
         await AsyncStorage.setItem('userToken', userToken);
         await AsyncStorage.setItem('userData', JSON.stringify(userData));
+        await exitGuestMode();
         
         setToken(userToken);
         setUser(userData);
         setIsAuthenticated(true);
+        setIsGuest(false);
         
-        return { success: true };
+        return { success: true, offline: result.offline };
       }
       
-      return { success: false, error: result.data?.error || 'Login failed' };
+      return { success: false, error: result.data?.error || result.error || 'Login failed' };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: error.message };
@@ -78,12 +106,14 @@ export const AuthProvider = ({ children }) => {
         // Save token and user data
         await AsyncStorage.setItem('userToken', userToken);
         await AsyncStorage.setItem('userData', JSON.stringify(userData));
+        await exitGuestMode();
         
         setToken(userToken);
         setUser(userData);
         setIsAuthenticated(true);
+        setIsGuest(false);
         
-        return { success: true };
+        return { success: true, offline: result.offline };
       }
       
       return { 
@@ -101,10 +131,12 @@ export const AuthProvider = ({ children }) => {
       await authAPI.logout();
       await AsyncStorage.removeItem('userToken');
       await AsyncStorage.removeItem('userData');
+      await exitGuestMode();
       
       setToken(null);
       setUser(null);
       setIsAuthenticated(false);
+      setIsGuest(false);
       
       return { success: true };
     } catch (error) {
@@ -174,9 +206,11 @@ export const AuthProvider = ({ children }) => {
       token, 
       loading, 
       isAuthenticated,
+      isGuest,
       login, 
       signup,
       logout,
+      continueAsGuest,
       refreshUserProfile,
       getUserData
     }}>

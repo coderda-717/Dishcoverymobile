@@ -1,6 +1,14 @@
 // dishcovery/app/services/api.js
 // ✅ CORRECTED VERSION - Matches backend URL and structure
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  isNetworkFailure,
+  localSignup,
+  localLogin,
+  cacheRecipesLocally,
+  getLocallyCachedRecipes,
+  saveRecipeLocally,
+} from './localFallback';
 
 // ✅ CORRECT Backend URL
 const API_BASE_URL = 'https://dishcovery-backend-ln31.onrender.com/api';
@@ -90,9 +98,20 @@ export const authAPI = {
       };
     } catch (error) {
       console.error('❌ Signup error:', error);
-      if (error.name === 'AbortError') {
-        return { success: false, error: 'Request timeout. Please try again.' };
+
+      // ✅ Backend unreachable — fall back to on-device local storage
+      if (isNetworkFailure(error)) {
+        console.log('⚠️ Backend unavailable, falling back to local storage for signup');
+        const localResult = await localSignup(userData);
+
+        if (localResult.success) {
+          await AsyncStorage.setItem('userToken', localResult.data.token);
+          await AsyncStorage.setItem('userData', JSON.stringify(localResult.data.user));
+        }
+
+        return localResult;
       }
+
       return {
         success: false,
         error: error.message || 'Network error occurred',
@@ -130,9 +149,20 @@ export const authAPI = {
       };
     } catch (error) {
       console.error('❌ Login error:', error);
-      if (error.name === 'AbortError') {
-        return { success: false, error: 'Request timeout. Please try again.' };
+
+      // ✅ Backend unreachable — fall back to on-device local storage
+      if (isNetworkFailure(error)) {
+        console.log('⚠️ Backend unavailable, falling back to local storage for login');
+        const localResult = await localLogin(email, password);
+
+        if (localResult.success) {
+          await AsyncStorage.setItem('userToken', localResult.data.token);
+          await AsyncStorage.setItem('userData', JSON.stringify(localResult.data.user));
+        }
+
+        return localResult;
       }
+
       return { success: false, error: error.message || 'Network error' };
     }
   },
@@ -226,9 +256,21 @@ export const recipeAPI = {
 
       const data = await response.json();
       console.log('✅ Recipes fetched:', data.length);
-      return Array.isArray(data) ? data : [];
+      const recipes = Array.isArray(data) ? data : [];
+
+      // ✅ Cache the latest data locally in case the backend goes down later
+      await cacheRecipesLocally(recipes);
+
+      return recipes;
     } catch (error) {
       console.error('❌ Get recipes error:', error);
+
+      // ✅ Backend unreachable — serve whatever we last cached locally
+      if (isNetworkFailure(error)) {
+        console.log('⚠️ Backend unavailable, serving locally cached recipes');
+        return await getLocallyCachedRecipes();
+      }
+
       return [];
     }
   },
@@ -308,6 +350,15 @@ export const recipeAPI = {
       return { success: response.ok, data };
     } catch (error) {
       console.error('❌ Create recipe error:', error);
+
+      // ✅ Backend unreachable — save the recipe on-device so it isn't lost;
+      // it stays local-only until the backend is reachable again.
+      if (isNetworkFailure(error)) {
+        console.log('⚠️ Backend unavailable, saving recipe locally');
+        const saved = await saveRecipeLocally(recipeData);
+        return { success: true, data: saved, offline: true };
+      }
+
       return { success: false, error: error.message || 'Failed to create recipe' };
     }
   },
