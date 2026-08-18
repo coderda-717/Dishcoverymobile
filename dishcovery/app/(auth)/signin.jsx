@@ -52,6 +52,17 @@ const SignInScreen = () => {
     return isValid;
   };
 
+    useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate("Onboarding");
+        return true;
+      };
+      const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
+
   const handleLogin = async () => {
     if (!validateForm()) {
       return;
