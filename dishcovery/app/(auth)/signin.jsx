@@ -2,8 +2,7 @@
 // ✅ FIXED - Properly navigates to tabs after authentication
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator, KeyboardAvoidingView, Platform, BackHandler } from 'react-native';
-import { useRouter } from "expo-router";
-import { useFocusEffect } from '@react-navigation/native';
+import { useRouter, useFocusEffect } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
