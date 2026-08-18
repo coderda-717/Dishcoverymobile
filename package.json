@@ -48,7 +48,7 @@
     "yup": "^1.7.1"
   },
   "devDependencies": {
-    "@types/react": "~19.1.0",
+    "@types/react": "^19.1.1",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~11.0.0",
     "typescript": "~6.0.3"
