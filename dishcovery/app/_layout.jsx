@@ -1,13 +1,14 @@
 // dishcovery/app/_layout.jsx
 import React, { useEffect, useState } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, usePathname } from 'expo-router';
 import { useFonts } from 'expo-font';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, BackHandler } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthProvider } from './context/AuthContext';
 
 function RootLayoutNav() {
   const segments = useSegments();
+  const pathname = usePathname();
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -25,6 +26,37 @@ function RootLayoutNav() {
   useEffect(() => {
    
   }, [isReady, isAuthenticated, segments, fontsLoaded]);
+
+  // Single, app-wide hardware back-button handler.
+  // This is the ONLY place back navigation is intercepted — do not add
+  // BackHandler/useFocusEffect back handling in individual screens, or you'll
+  // get two competing listeners and unpredictable behavior.
+  //
+  // Chain: signin / signup / forgot-password -> onboarding -> index ("/")
+  useEffect(() => {
+    const onBackPress = () => {
+      if (
+        pathname.includes('/signin') ||
+        pathname.includes('/signup') ||
+        pathname.includes('/forgot-password')
+      ) {
+        router.replace('/(auth)/onboarding');
+        return true;
+      }
+
+      if (pathname.includes('/onboarding')) {
+        router.replace('/');
+        return true;
+      }
+
+      // Any other screen: let the default back behavior happen
+      // (native stack pop, or app exit if there's nothing left).
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [pathname, router]);
 
   const checkAuthStatus = async () => {
     try {

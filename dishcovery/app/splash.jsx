@@ -56,35 +56,10 @@ export default function SplashScreen() {
             marginBottom: 24,
             resizeMode: "contain",
           }}
-          source={require("../assets/images/icon1.png")}
+          source={require("../assets/images/favicon.png")}
         />
 
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: "700",
-            color: "#1a1a1a",
-            marginBottom: 16,
-            textAlign: "center",
-            fontFamily: 'GoogleSans-Bold',
-          }}
-        >
-          Dishcovery
-        </Text>
-
-        <Text
-          style={{
-            fontSize: 16,
-            color: "#666",
-            marginBottom: 24,
-            textAlign: "center",
-            fontFamily: 'GoogleSans-Regular',
-          }}
-        >
-          Discover flavors that bring people together
-        </Text>
-
-        <ActivityIndicator size="small" color="#FF4C4C" style={{ marginTop: 20 }} />
+       
       </View>
     </SafeAreaView>
   );
