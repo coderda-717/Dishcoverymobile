@@ -1,6 +1,6 @@
 // dishcovery/app/(auth)/signup.jsx
 // ✅ FIXED - Redirects to signin after successful signup (no auto-login)
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Text,
   View,
@@ -10,8 +10,9 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  BackHandler,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { authAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AuthInput from "../components/input";
@@ -97,15 +98,15 @@ const SignUpScreen = () => {
     return isValid;
   };
 
-    useFocusEffect(
+  useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate("Onboarding");
+        router.replace("/(auth)/onboarding");
         return true;
       };
       const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
       return () => subscription.remove();
-    }, [navigation])
+    }, [router])
   );
 
   const handleSignUp = async () => {
