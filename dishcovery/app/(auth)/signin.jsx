@@ -1,8 +1,9 @@
 // dishcovery/app/(auth)/signin.jsx
 // ✅ FIXED - Properly navigates to tabs after authentication
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator, KeyboardAvoidingView, Platform, BackHandler } from 'react-native';
 import { useRouter } from "expo-router";
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -52,15 +53,15 @@ const SignInScreen = () => {
     return isValid;
   };
 
-    useFocusEffect(
+  useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate("Onboarding");
+        router.replace("/(auth)/onboarding");
         return true;
       };
       const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
       return () => subscription.remove();
-    }, [navigation])
+    }, [router])
   );
 
   const handleLogin = async () => {

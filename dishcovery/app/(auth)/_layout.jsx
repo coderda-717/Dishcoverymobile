@@ -26,12 +26,6 @@ export default function AuthLayout() {
         animation: 'slide_from_right',
       }}>
       <Stack.Screen 
-        name="welcome" 
-        options={{
-          gestureEnabled: false,
-        }} 
-      />
-      <Stack.Screen 
         name="onboarding" 
         options={{
           gestureEnabled: false,
